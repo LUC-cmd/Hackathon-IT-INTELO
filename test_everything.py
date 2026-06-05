@@ -27,7 +27,7 @@ def print_result(test_name, passed, details=""):
 print_section("1️⃣ VÉRIFICATION INSTALLATION")
 
 try:
-    import pandas as pd
+    import pandas
     print_result("pandas", True)
 except ImportError:
     print_result("pandas", False, "- Install: pip install pandas")

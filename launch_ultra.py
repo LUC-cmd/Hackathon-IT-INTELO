@@ -30,6 +30,13 @@ def main():
     script_dir = Path(__file__).parent
     os.chdir(script_dir)
 
+    # Clear Python cache to avoid stale .pyc files
+    import shutil
+    cache_dir = script_dir / '__pycache__'
+    if cache_dir.exists():
+        shutil.rmtree(cache_dir)
+        print("[OK] Cache cleared\n")
+
     print("[*] Checking Flask installation...")
     try:
         import flask

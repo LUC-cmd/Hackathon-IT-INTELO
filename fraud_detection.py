@@ -50,7 +50,7 @@ def std_dev(values: List[float], mean_val: float = None) -> float:
 
 def calculate_distance_km(country1: str, country2: str) -> float:
     """Approximation simple de la distance entre deux pays"""
-    if not country1 or not country2 or pd.isna(country1) or pd.isna(country2):
+    if not country1 or not country2 or is_empty(country1) or is_empty(country2):
         return 0
 
     country_coords = {
@@ -72,7 +72,7 @@ def calculate_distance_km(country1: str, country2: str) -> float:
     lat1, lon1 = country_coords[country1]
     lat2, lon2 = country_coords[country2]
 
-    return np.sqrt((lat2 - lat1)**2 + (lon2 - lon1)**2) * 111
+    return math.sqrt((lat2 - lat1)**2 + (lon2 - lon1)**2) * 111
 
 def detect_fraud(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
@@ -125,32 +125,8 @@ def detect_fraud(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         except:
             continue
 
-    # Phase 2 : Calcul des statistiques clients
-    client_stats = {}
-    for user_id, profile in client_profiles.items():
-        amounts = profile['amounts']
-        if amounts:
-            mean_val = mean(amounts)
-            std_val = std_dev(amounts, mean_val)
-            client_stats[user_id] = {
-                'mean': mean_val,
-                'std': std_val,
-                'min': min(amounts),
-                'max': max(amounts),
-                'countries': profile['countries'],
-                'merchants': profile['merchants'],
-                'card_present_ratio': profile['card_present_count'] / max(1, profile['total_tx']),
-            }
-        else:
-            client_stats[user_id] = {
-                'mean': 0, 'std': 0, 'min': 0, 'max': 0,
-                'countries': profile['countries'],
-                'merchants': profile['merchants'],
-                'card_present_ratio': 0,
-            }
-
     # Phase 3 : Évaluation de chaque transaction
-    for valid_tx in valid_txs:
+    for idx, valid_tx in enumerate(valid_txs):
         tx = valid_tx['tx']
         tx_id = str(tx.get('transaction_id', 'unknown'))
         amount = valid_tx['amount']
@@ -163,14 +139,32 @@ def detect_fraud(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         fraud_score = 0.0
         reasons = []
 
+        # Calcul des statistiques du client (excluant tx actuelle)
+        prior_amounts = []
+        prior_countries = set()
+        prior_merchants = set()
+        prior_card_present = 0
+        prior_total = 0
+        for i, other_tx in enumerate(valid_txs):
+            if i < idx and other_tx['user_id'] == user_id:
+                if other_tx['amount'] and other_tx['amount'] > 0:
+                    prior_amounts.append(other_tx['amount'])
+                if other_tx['country']:
+                    prior_countries.add(other_tx['country'])
+                if other_tx['merchant']:
+                    prior_merchants.add(other_tx['merchant'])
+                if other_tx['card_present']:
+                    prior_card_present += 1
+                prior_total += 1
+
+        client_mean = mean(prior_amounts) if prior_amounts else 0
+        client_std = std_dev(prior_amounts, client_mean) if prior_amounts else 0
+
         # Détection 1 : Montant invalide
         if amount is None or amount <= 0:
             fraud_score = 1.0
             reasons.append("Montant invalide (nul ou négatif)")
         else:
-            stats = client_stats.get(user_id, {})
-            client_mean = stats.get('mean', 0)
-            client_std = stats.get('std', 0)
 
             # Détection 2 : Anomalie montant (Z-score)
             if client_mean > 0 and client_std > 0:
@@ -186,13 +180,14 @@ def detect_fraud(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 reasons.append(f"Montant 2x la moyenne : {amount:.2f} vs {client_mean:.2f}")
 
             # Détection 3 : Transaction sans carte physique
-            if not card_present and stats.get('card_present_ratio', 0) > 0.8:
+            card_ratio = prior_card_present / max(1, prior_total) if prior_total > 0 else 0
+            if not card_present and card_ratio > 0.8:
                 fraud_score += 0.10
                 reasons.append("Transaction en ligne (vs habitude carte présente)")
 
             # Détection 4 : Commerçant nouveau
-            if merchant and merchant not in stats.get('merchants', set()):
-                if len(stats.get('merchants', set())) > 5:
+            if merchant and merchant not in prior_merchants:
+                if len(prior_merchants) > 5:
                     fraud_score += 0.05
                     reasons.append(f"Commerçant nouveau : {merchant}")
 
@@ -229,10 +224,10 @@ def detect_fraud(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                                 abs((other_tx['timestamp'] - timestamp).total_seconds()) < 60))
 
             if nearby_txs >= 5:
-                fraud_score += 0.25
+                fraud_score += 0.55
                 reasons.append(f"Fréquence excessive : {nearby_txs} transactions en 1 minute")
             elif nearby_txs >= 3:
-                fraud_score += 0.10
+                fraud_score += 0.15
                 reasons.append(f"Fréquence élevée : {nearby_txs} transactions en 1 minute")
 
         # Clipping du score entre 0 et 1

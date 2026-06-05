@@ -1,28 +1,52 @@
-import pandas as pd
-import numpy as np
 from datetime import datetime, timedelta
 from collections import defaultdict
 from typing import List, Dict, Any, Tuple
+import math
+import csv
 
 def load_transactions(csv_path: str) -> List[Dict[str, Any]]:
     """Charge les transactions depuis un fichier CSV"""
     try:
-        df = pd.read_csv(csv_path)
-        return df.to_dict('records')
+        transactions = []
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                transactions.append(row)
+        return transactions
     except Exception as e:
         print(f"Erreur lors du chargement : {e}")
         return []
 
+def is_empty(value: Any) -> bool:
+    """Vérifie si une valeur est vide"""
+    return value is None or value == "" or str(value).strip() == ""
+
 def parse_timestamp(ts: Any) -> datetime:
     """Parse un timestamp ISO 8601 avec gestion des valeurs vides"""
-    if pd.isna(ts) or ts == "" or ts is None:
+    if is_empty(ts):
         return None
     try:
         if isinstance(ts, datetime):
             return ts
-        return pd.to_datetime(ts)
+        ts_str = str(ts).strip()
+        return datetime.fromisoformat(ts_str.replace('Z', '+00:00'))
     except:
         return None
+
+def mean(values: List[float]) -> float:
+    """Calcul la moyenne"""
+    if not values:
+        return 0
+    return sum(values) / len(values)
+
+def std_dev(values: List[float], mean_val: float = None) -> float:
+    """Calcul l'écart-type"""
+    if len(values) < 2:
+        return 0
+    if mean_val is None:
+        mean_val = mean(values)
+    variance = sum((x - mean_val) ** 2 for x in values) / len(values)
+    return math.sqrt(variance)
 
 def calculate_distance_km(country1: str, country2: str) -> float:
     """Approximation simple de la distance entre deux pays"""
@@ -68,12 +92,19 @@ def detect_fraud(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     valid_txs = []
     for tx in transactions:
         try:
-            amount = float(tx.get('amount', 0)) if pd.notna(tx.get('amount')) else None
-            user_id = str(tx.get('user_id', 'unknown'))
+            amount_raw = tx.get('amount', '')
+            amount = None
+            if not is_empty(amount_raw):
+                try:
+                    amount = float(amount_raw)
+                except:
+                    pass
+
+            user_id = str(tx.get('user_id', 'unknown')).strip()
             timestamp = parse_timestamp(tx.get('timestamp'))
-            country = str(tx.get('country', '')).upper() if pd.notna(tx.get('country')) else ''
-            merchant = str(tx.get('merchant', '')).lower() if pd.notna(tx.get('merchant')) else ''
-            card_present = bool(tx.get('card_present', False))
+            country = str(tx.get('country', '')).strip().upper()
+            merchant = str(tx.get('merchant', '')).strip().lower()
+            card_present = str(tx.get('card_present', 'false')).lower() in ['true', '1', 'yes']
 
             valid_txs.append({
                 'tx': tx, 'amount': amount, 'user_id': user_id, 'timestamp': timestamp,
@@ -99,19 +130,20 @@ def detect_fraud(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     for user_id, profile in client_profiles.items():
         amounts = profile['amounts']
         if amounts:
+            mean_val = mean(amounts)
+            std_val = std_dev(amounts, mean_val)
             client_stats[user_id] = {
-                'mean': np.mean(amounts),
-                'std': np.std(amounts) if len(amounts) > 1 else 0,
-                'min': np.min(amounts),
-                'max': np.max(amounts),
-                'median': np.median(amounts),
+                'mean': mean_val,
+                'std': std_val,
+                'min': min(amounts),
+                'max': max(amounts),
                 'countries': profile['countries'],
                 'merchants': profile['merchants'],
                 'card_present_ratio': profile['card_present_count'] / max(1, profile['total_tx']),
             }
         else:
             client_stats[user_id] = {
-                'mean': 0, 'std': 0, 'min': 0, 'max': 0, 'median': 0,
+                'mean': 0, 'std': 0, 'min': 0, 'max': 0,
                 'countries': profile['countries'],
                 'merchants': profile['merchants'],
                 'card_present_ratio': 0,
@@ -137,21 +169,21 @@ def detect_fraud(transactions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             reasons.append("Montant invalide (nul ou négatif)")
         else:
             stats = client_stats.get(user_id, {})
-            mean = stats.get('mean', 0)
-            std = stats.get('std', 0)
+            client_mean = stats.get('mean', 0)
+            client_std = stats.get('std', 0)
 
             # Détection 2 : Anomalie montant (Z-score)
-            if mean > 0 and std > 0:
-                z_score = (amount - mean) / std
+            if client_mean > 0 and client_std > 0:
+                z_score = (amount - client_mean) / client_std
                 if z_score > 3.5:
                     fraud_score += 0.35
-                    reasons.append(f"Montant anormal : {amount:.2f} vs moyenne {mean:.2f}±{std:.2f} (z={z_score:.1f})")
+                    reasons.append(f"Montant anormal : {amount:.2f} vs moyenne {client_mean:.2f}±{client_std:.2f} (z={z_score:.1f})")
                 elif z_score > 2.5:
                     fraud_score += 0.15
-                    reasons.append(f"Montant élevé : {amount:.2f} vs moyenne {mean:.2f}")
-            elif amount and mean > 0 and amount > mean * 2:
+                    reasons.append(f"Montant eleve : {amount:.2f} vs moyenne {client_mean:.2f}")
+            elif amount and client_mean > 0 and amount > client_mean * 2:
                 fraud_score += 0.15
-                reasons.append(f"Montant 2x la moyenne : {amount:.2f} vs {mean:.2f}")
+                reasons.append(f"Montant 2x la moyenne : {amount:.2f} vs {client_mean:.2f}")
 
             # Détection 3 : Transaction sans carte physique
             if not card_present and stats.get('card_present_ratio', 0) > 0.8:

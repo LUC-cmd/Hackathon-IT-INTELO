@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShieldAI ULTRA - Fraud Detection Command Center</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-matrix"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ultra.css') }}">
+</head>
+<body>
+    <!-- HEADER SPECTACULAIRE -->
+    <header class="header-ultra">
+        <div class="header-content">
+            <div class="logo-section">
+                <div class="shield-animated">🛡️</div>
+                <div class="title-section">
+                    <h1>ShieldAI ULTRA</h1>
+                    <p class="tagline">Advanced Fraud Detection Command Center</p>
+                </div>
+            </div>
+            <div class="header-stats">
+                <div class="stat-badge">
+                    <span class="stat-label">System Status</span>
+                    <span class="stat-value pulse-glow">ACTIVE</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="stat-label">Real-Time</span>
+                    <span class="stat-value" id="liveTime">00:00:00</span>
+                </div>
+                <div class="stat-badge">
+                    <span class="stat-label">Threat Level</span>
+                    <span class="stat-value" id="threatLevel">MEDIUM</span>
+                </div>
+            </div>
+        </div>
+        <div class="header-bar"></div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <div class="container-ultra">
+        <!-- LEFT PANEL - CONTROLS -->
+        <aside class="control-panel">
+            <div class="panel-section premium">
+                <h3>DETECTION CONTROL</h3>
+                <div class="control-item">
+                    <label>Sensitivity Level</label>
+                    <div class="slider-advanced">
+                        <input type="range" id="sensitivitySlider" min="0.3" max="0.9" step="0.05" value="0.5">
+                        <div class="slider-labels">
+                            <span>Low</span>
+                            <span id="sensitivityValue" class="active-value">0.50</span>
+                            <span>High</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <button class="btn-action glow" id="fullScanBtn" title="Scan all transactions">
+                        <span class="icon">🔍</span> Full Scan
+                    </button>
+                    <button class="btn-action glow" id="alertOnlyBtn" title="Show alerts only">
+                        <span class="icon">🚨</span> Alerts Only
+                    </button>
+                    <button class="btn-action glow" id="exportBtn" title="Export results">
+                        <span class="icon">📥</span> Export
+                    </button>
+                    <button class="btn-action glow" id="refreshBtn" title="Refresh data">
+                        <span class="icon">🔄</span> Refresh
+                    </button>
+                </div>
+            </div>
+
+            <div class="panel-section stats-box">
+                <h3>LIVE METRICS</h3>
+                <div class="metric-display">
+                    <div class="metric-row">
+                        <span class="metric-name">Total TX</span>
+                        <span class="metric-value" id="metricTotal">-</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-name">Alerts</span>
+                        <span class="metric-value alert" id="metricAlerts">-</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-name">Critical</span>
+                        <span class="metric-value critical" id="metricCritical">-</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-name">Avg Risk</span>
+                        <span class="metric-value" id="metricAvg">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel-section feature-box">
+                <h3>FEATURES</h3>
+                <ul class="feature-list">
+                    <li>7-Signal Detection</li>
+                    <li>Real-Time Processing</li>
+                    <li>Geographic Analysis</li>
+                    <li>Risk Heatmaps</li>
+                    <li>Smart Alerts</li>
+                    <li>Pattern Recognition</li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- CENTER CONTENT -->
+        <main class="main-content-ultra">
+            <!-- TOP KPI CARDS -->
+            <section class="kpi-mega">
+                <div class="kpi-mega-card total-card">
+                    <div class="kpi-icon">📊</div>
+                    <div class="kpi-text">
+                        <span class="kpi-label">Transactions Analyzed</span>
+                        <span class="kpi-big" id="kpi1">0</span>
+                    </div>
+                    <div class="kpi-chart-mini" id="mini1"></div>
+                </div>
+
+                <div class="kpi-mega-card alert-card">
+                    <div class="kpi-icon">🚨</div>
+                    <div class="kpi-text">
+                        <span class="kpi-label">Fraudulent Detected</span>
+                        <span class="kpi-big alert" id="kpi2">0</span>
+                        <span class="kpi-percent" id="kpiPercent">0%</span>
+                    </div>
+                    <div class="kpi-chart-mini" id="mini2"></div>
+                </div>
+
+                <div class="kpi-mega-card critical-card">
+                    <div class="kpi-icon">⚠️</div>
+                    <div class="kpi-text">
+                        <span class="kpi-label">Critical Issues</span>
+                        <span class="kpi-big critical" id="kpi3">0</span>
+                    </div>
+                    <div class="progress-bar"><div class="progress-fill" id="progFill"></div></div>
+                </div>
+
+                <div class="kpi-mega-card avg-card">
+                    <div class="kpi-icon">📈</div>
+                    <div class="kpi-text">
+                        <span class="kpi-label">Risk Average</span>
+                        <span class="kpi-big" id="kpi4">0.00</span>
+                    </div>
+                    <canvas id="gaugeChart" class="gauge"></canvas>
+                </div>
+            </section>
+
+            <!-- CHARTS SECTION -->
+            <section class="charts-mega">
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <h3>Risk Distribution Timeline</h3>
+                        <span class="chart-badge">Live Updates</span>
+                    </div>
+                    <canvas id="riskTimeline"></canvas>
+                </div>
+
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <h3>Country Risk Heatmap</h3>
+                        <span class="chart-badge">Geographic</span>
+                    </div>
+                    <canvas id="heatmapChart"></canvas>
+                </div>
+
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <h3>Score Distribution</h3>
+                        <span class="chart-badge">Analytics</span>
+                    </div>
+                    <canvas id="scoreChart"></canvas>
+                </div>
+
+                <div class="chart-box">
+                    <div class="chart-header">
+                        <h3>Alert Breakdown</h3>
+                        <span class="chart-badge">By Type</span>
+                    </div>
+                    <canvas id="breakdownChart"></canvas>
+                </div>
+            </section>
+
+            <!-- ALERTS SECTION -->
+            <section class="alerts-mega">
+                <div class="alerts-header">
+                    <h3>🚨 THREAT ANALYSIS CENTER</h3>
+                    <span class="alert-count" id="alertCount">0 Active</span>
+                </div>
+                <div id="threatsList" class="threats-container">
+                    <p class="loading">Analyzing threats...</p>
+                </div>
+            </section>
+
+            <!-- TRANSACTIONS DETAIL -->
+            <section class="transactions-mega">
+                <div class="transactions-header">
+                    <h3>📋 TRANSACTION LEDGER</h3>
+                    <div class="filter-controls">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="alert">Alerts</button>
+                        <button class="filter-btn" data-filter="critical">Critical</button>
+                        <button class="filter-btn" data-filter="safe">Safe</button>
+                    </div>
+                </div>
+                <div id="transactionsList" class="transactions-table">
+                    <p class="loading">Loading transactions...</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- RIGHT PANEL - INSIGHTS -->
+        <aside class="insight-panel">
+            <div class="insight-section">
+                <h3>AI INSIGHTS</h3>
+                <div id="insightsList" class="insights-list">
+                    <p class="loading">Analyzing...</p>
+                </div>
+            </div>
+
+            <div class="insight-section">
+                <h3>TOP PATTERNS</h3>
+                <div id="patternsList" class="patterns-list">
+                    <p class="loading">Detecting patterns...</p>
+                </div>
+            </div>
+
+            <div class="insight-section">
+                <h3>QUICK STATS</h3>
+                <div class="quick-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">⚡</span>
+                        <span class="stat-data"><strong id="stat1">-</strong> High Risk</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🌍</span>
+                        <span class="stat-data"><strong id="stat2">-</strong> Countries</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">👥</span>
+                        <span class="stat-data"><strong id="stat3">-</strong> Users</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">💰</span>
+                        <span class="stat-data"><strong id="stat4">-</strong> Avg Amount</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer-ultra">
+        <div class="footer-content">
+            <p>ShieldAI ULTRA | Hackathon IT 2026 | Advanced Fraud Detection</p>
+            <p>Multi-Signal Detection • Real-Time Analysis • Geographic Intelligence • Pattern Recognition</p>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/ultra.js') }}"></script>
+</body>
+</html>

@@ -58,7 +58,13 @@ def process_data(transactions=None):
 
 @app.route('/')
 def index():
-    """Main dashboard page."""
+    """Main dashboard page - ULTRA VERSION."""
+    process_data()
+    return render_template('dashboard_ultra.html')
+
+@app.route('/classic')
+def index_classic():
+    """Classic dashboard page."""
     process_data()
     return render_template('index.html')
 

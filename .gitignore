@@ -24,6 +24,9 @@ Thumbs.db
 .streamlit/
 .streamlit/cache/
 
-# Temporary
+# Temporary & Generated files
 *.tmp
 *.log
+fraud_report.html
+fraud_results.csv
+shieldai_fraud_results.csv

@@ -1,0 +1,16 @@
+transaction_id,timestamp,user_id,amount,currency,merchant,country,card_present
+tx001,2024-01-15T09:30:00,u001,50,EUR,Boulangerie,FR,True
+tx002,2024-01-15T12:45:00,u001,150,EUR,Restaurant,FR,False
+tx003,2024-01-15T13:00:00,u001,5000,EUR,Electronique,JP,False
+tx004,2024-01-15T14:20:00,u002,75,EUR,Supermarché,FR,True
+tx005,2024-01-15T14:25:00,u002,80,EUR,Pharmacie,FR,True
+tx006,2024-01-15T15:00:00,u003,-100,EUR,Inconnu,US,False
+tx007,2024-01-15T16:10:00,u001,55,EUR,Boulangerie,FR,True
+tx008,2024-01-15T16:11:00,u001,48,EUR,Café,FR,False
+tx009,2024-01-15T16:12:00,u001,52,EUR,Boulangerie,FR,True
+tx010,2024-01-15T16:13:00,u001,51,EUR,Café,FR,False
+tx011,2024-01-15T16:14:00,u001,49,EUR,Boulangerie,FR,False
+tx012,2024-01-16T08:00:00,u004,200,EUR,Hôtel,FR,True
+tx013,2024-01-16T08:30:00,u004,100,USD,Restaurant,US,False
+tx014,2024-01-16T09:00:00,u005,,EUR,Inconnu,FR,True
+tx015,2024-01-16T10:00:00,u006,300,EUR,Électronique,FR,False

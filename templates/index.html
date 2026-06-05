@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShieldAI - Premium Fraud Detection Dashboard</title>
+    <title>ShieldAI - Premium Fraud Detection</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <!-- Navigation Header -->
+    <!-- Navigation -->
     <nav class="navbar">
         <div class="navbar-container">
             <div class="navbar-brand">
@@ -16,8 +16,8 @@
                 <span class="brand-text">ShieldAI</span>
             </div>
             <div class="navbar-info">
-                <span class="status-badge">LIVE MONITORING</span>
-                <span class="timestamp" id="timestamp"></span>
+                <span class="status-badge">LIVE</span>
+                <span class="timestamp" id="timestamp">Loading...</span>
             </div>
         </div>
     </nav>
@@ -32,126 +32,302 @@
                     <label>Alert Threshold</label>
                     <div class="slider-container">
                         <input type="range" id="thresholdSlider" min="0.3" max="0.9" step="0.05" value="0.5">
-                        <span id="thresholdValue" class="threshold-display">0.5</span>
+                        <span id="thresholdValue">0.5</span>
                     </div>
                 </div>
             </div>
 
             <div class="sidebar-section">
                 <h3>Filters</h3>
-                <button class="filter-btn active" data-filter="all">All Transactions</button>
-                <button class="filter-btn" data-filter="alerts">Alerts Only</button>
-                <button class="filter-btn" data-filter="critical">Critical (>0.7)</button>
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="alerts">Alerts</button>
+                <button class="filter-btn" data-filter="critical">Critical</button>
                 <button class="filter-btn" data-filter="normal">Normal</button>
             </div>
 
             <div class="sidebar-section">
                 <h3>Actions</h3>
-                <button class="action-btn primary" id="exportBtn">
-                    <span>📥</span> Export CSV
-                </button>
-                <button class="action-btn" id="refreshBtn">
-                    <span>🔄</span> Refresh Data
-                </button>
-            </div>
-
-            <div class="sidebar-section info">
-                <h4>System Info</h4>
-                <p>Hackathon IT 2026</p>
-                <p>Fraud Detection Challenge</p>
-                <p style="font-size: 0.8em; margin-top: 10px;">Powered by ShieldAI Engine</p>
+                <button class="action-btn primary" id="exportBtn">Export CSV</button>
+                <button class="action-btn" id="refreshBtn">Refresh</button>
             </div>
         </aside>
 
-        <!-- Content Area -->
+        <!-- Content -->
         <main class="content">
-            <!-- KPI Section -->
+            <!-- KPIs -->
             <section class="kpi-section">
                 <div class="kpi-card total">
                     <div class="kpi-icon">📊</div>
                     <div class="kpi-content">
-                        <div class="kpi-label">Total Transactions</div>
-                        <div class="kpi-value" id="kpiTotal">0</div>
+                        <div class="kpi-label">Total</div>
+                        <div class="kpi-value" id="kpiTotal">-</div>
                     </div>
                 </div>
 
                 <div class="kpi-card alerts">
                     <div class="kpi-icon">🚨</div>
                     <div class="kpi-content">
-                        <div class="kpi-label">Alerts Detected</div>
-                        <div class="kpi-value" id="kpiAlerts">0</div>
-                        <div class="kpi-subtext" id="kpiAlertRate">0%</div>
+                        <div class="kpi-label">Alerts</div>
+                        <div class="kpi-value" id="kpiAlerts">-</div>
                     </div>
                 </div>
 
                 <div class="kpi-card critical">
                     <div class="kpi-icon">⚠️</div>
                     <div class="kpi-content">
-                        <div class="kpi-label">Critical Issues</div>
-                        <div class="kpi-value" id="kpiCritical">0</div>
+                        <div class="kpi-label">Critical</div>
+                        <div class="kpi-value" id="kpiCritical">-</div>
                     </div>
                 </div>
 
                 <div class="kpi-card avg">
                     <div class="kpi-icon">📈</div>
                     <div class="kpi-content">
-                        <div class="kpi-label">Average Score</div>
-                        <div class="kpi-value" id="kpiAvgScore">0.00</div>
+                        <div class="kpi-label">Avg Score</div>
+                        <div class="kpi-value" id="kpiAvgScore">-</div>
                     </div>
                 </div>
             </section>
 
-            <!-- Charts Section -->
+            <!-- Charts -->
             <section class="charts-section">
                 <div class="chart-container">
-                    <div class="chart-header">
-                        <h3>Score Distribution</h3>
-                        <p class="chart-description">Distribution of fraud scores across all transactions</p>
-                    </div>
-                    <canvas id="scoreChart"></canvas>
+                    <h3>Score Distribution</h3>
+                    <canvas id="scoreChart" height="80"></canvas>
                 </div>
 
                 <div class="chart-container">
-                    <div class="chart-header">
-                        <h3>Risk by Country</h3>
-                        <p class="chart-description">Average fraud score per country</p>
-                    </div>
-                    <canvas id="countryChart"></canvas>
+                    <h3>Risk by Country</h3>
+                    <canvas id="countryChart" height="80"></canvas>
                 </div>
             </section>
 
-            <!-- Alerts Section -->
+            <!-- Alerts -->
             <section class="alerts-section">
-                <div class="section-header">
-                    <h3>🚨 Priority Alerts</h3>
-                    <span class="badge" id="alertCount">0</span>
-                </div>
+                <h3>🚨 Priority Alerts</h3>
                 <div id="alertsList" class="alerts-list">
-                    <p class="no-data">Loading alerts...</p>
+                    <p class="loading">Loading alerts...</p>
                 </div>
             </section>
 
-            <!-- Transactions Section -->
+            <!-- Transactions -->
             <section class="transactions-section">
-                <div class="section-header">
-                    <h3>📋 Recent Transactions</h3>
-                    <span class="badge" id="txCount">0</span>
-                </div>
+                <h3>📋 Transactions</h3>
                 <div id="transactionsList" class="transactions-list">
-                    <p class="no-data">Loading transactions...</p>
+                    <p class="loading">Loading transactions...</p>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- Footer -->
     <footer class="footer">
-        <div class="footer-content">
-            <p>ShieldAI Premium Dashboard | Hackathon IT 2026 | Fraud Detection Challenge</p>
-            <p style="font-size: 0.9em; margin-top: 5px;">Multi-signal detection • Adaptive profiles • Real-time monitoring</p>
-        </div>
+        <p>ShieldAI Premium Dashboard | Hackathon IT 2026</p>
     </footer>
 
-    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script>
+        // Global variables
+        let scoreChart = null;
+        let countryChart = null;
+        let currentFilter = 'all';
+        let currentThreshold = 0.5;
+
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date();
+            document.getElementById('timestamp').textContent = now.toLocaleTimeString();
+        }
+
+        // Initialize
+        function init() {
+            console.log('[INIT] Starting dashboard...');
+            updateTimestamp();
+            setInterval(updateTimestamp, 1000);
+
+            // Event listeners
+            document.getElementById('thresholdSlider').addEventListener('change', handleThresholdChange);
+            document.getElementById('exportBtn').addEventListener('click', exportCSV);
+            document.getElementById('refreshBtn').addEventListener('click', () => loadData());
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    loadTransactions();
+                });
+            });
+
+            // Load data
+            loadData();
+        }
+
+        // Handle threshold change
+        function handleThresholdChange() {
+            const val = parseFloat(document.getElementById('thresholdSlider').value);
+            document.getElementById('thresholdValue').textContent = val.toFixed(2);
+            currentThreshold = val;
+            loadData();
+        }
+
+        // Load data from API
+        async function loadData() {
+            try {
+                console.log('[LOAD] Fetching data...');
+                const response = await fetch('/api/data?threshold=' + currentThreshold);
+                const data = await response.json();
+                console.log('[LOAD] Data received:', data);
+
+                // Update KPIs
+                document.getElementById('kpiTotal').textContent = data.metrics.total;
+                document.getElementById('kpiAlerts').textContent = data.metrics.alerts;
+                document.getElementById('kpiCritical').textContent = data.metrics.critical;
+                document.getElementById('kpiAvgScore').textContent = data.metrics.avg_score.toFixed(3);
+
+                // Update charts
+                updateCharts(data);
+
+                // Update alerts
+                updateAlerts(data.top_alerts);
+
+                // Update transactions
+                updateRecentTransactions(data.recent_transactions);
+
+            } catch (error) {
+                console.error('[ERROR]', error);
+                document.getElementById('alertsList').innerHTML = '<p class="error">Error loading data</p>';
+            }
+        }
+
+        // Update charts
+        function updateCharts(data) {
+            // Score chart
+            const scoreCtx = document.getElementById('scoreChart');
+            const scoreLabels = Object.keys(data.score_distribution);
+            const scoreValues = Object.values(data.score_distribution);
+
+            if (scoreChart) {
+                scoreChart.data.labels = scoreLabels;
+                scoreChart.data.datasets[0].data = scoreValues;
+                scoreChart.update();
+            } else {
+                scoreChart = new Chart(scoreCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: scoreLabels,
+                        datasets: [{
+                            label: 'Count',
+                            data: scoreValues,
+                            backgroundColor: ['#27ae60', '#3498db', '#f1c40f', '#e67e22', '#e74c3c'],
+                            borderRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }
+                        }
+                    }
+                });
+            }
+
+            // Country chart
+            const countryCtx = document.getElementById('countryChart');
+            const countryData = data.country_data.sort((a, b) => b.avg_score - a.avg_score);
+            const countryLabels = countryData.map(d => d.country);
+            const countryValues = countryData.map(d => (d.avg_score * 100).toFixed(0));
+
+            if (countryChart) {
+                countryChart.data.labels = countryLabels;
+                countryChart.data.datasets[0].data = countryValues;
+                countryChart.update();
+            } else {
+                countryChart = new Chart(countryCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: countryLabels,
+                        datasets: [{
+                            data: countryValues,
+                            backgroundColor: ['#e74c3c', '#e67e22', '#f1c40f', '#3498db', '#27ae60', '#9b59b6', '#1abc9c']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        }
+
+        // Update alerts
+        function updateAlerts(alerts) {
+            const list = document.getElementById('alertsList');
+            if (alerts.length === 0) {
+                list.innerHTML = '<p class="no-data">No alerts</p>';
+                return;
+            }
+            list.innerHTML = alerts.map((a, i) => `
+                <div class="alert-item ${a.score > 0.7 ? 'critical' : ''}">
+                    <strong>#${i+1} ${a.id}</strong> <span class="score">${(a.score*100).toFixed(0)}%</span>
+                    <p>${a.reason.substring(0, 120)}</p>
+                </div>
+            `).join('');
+        }
+
+        // Update transactions
+        function updateTransactions(txs) {
+            const list = document.getElementById('transactionsList');
+            if (txs.length === 0) {
+                list.innerHTML = '<p class="no-data">No transactions</p>';
+                return;
+            }
+            list.innerHTML = txs.map(tx => `
+                <div class="tx-item ${tx.is_suspicious ? 'alert' : ''}">
+                    <span class="tx-id">${tx.id}</span>
+                    <span class="tx-reason">${tx.reason.substring(0, 80)}</span>
+                    <span class="tx-score" style="color: ${tx.score > 0.7 ? '#e74c3c' : tx.score > 0.5 ? '#f39c12' : '#27ae60'}">${(tx.score*100).toFixed(0)}%</span>
+                    <span class="tx-status">${tx.is_suspicious ? 'ALERT' : 'OK'}</span>
+                </div>
+            `).join('');
+        }
+
+        // Wrapper for update
+        function updateRecentTransactions(txs) {
+            updateTransactions(txs);
+        }
+
+        // Load transactions
+        async function loadTransactions() {
+            try {
+                const response = await fetch(`/api/transactions?filter=${currentFilter}&threshold=${currentThreshold}`);
+                const data = await response.json();
+                updateTransactions(data.transactions);
+            } catch (error) {
+                console.error('[ERROR]', error);
+            }
+        }
+
+        // Export CSV
+        async function exportCSV() {
+            try {
+                const response = await fetch('/api/export');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'fraud_results.csv';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                console.error('[ERROR]', error);
+                alert('Export failed');
+            }
+        }
+
+        // Start on load
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>

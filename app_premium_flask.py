@@ -13,22 +13,83 @@ import os
 app = Flask(__name__)
 
 DEMO_TRANSACTIONS = [
-    {'transaction_id': 'tx001', 'user_id': 'u001', 'amount': 50, 'currency': 'EUR',
-     'merchant': 'Boulangerie', 'country': 'FR', 'card_present': True, 'timestamp': '2024-01-15T09:30:00'},
-    {'transaction_id': 'tx002', 'user_id': 'u001', 'amount': 55, 'currency': 'EUR',
-     'merchant': 'Cafe', 'country': 'FR', 'card_present': True, 'timestamp': '2024-01-15T10:00:00'},
-    {'transaction_id': 'tx003', 'user_id': 'u001', 'amount': 52, 'currency': 'EUR',
-     'merchant': 'Supermarche', 'country': 'FR', 'card_present': True, 'timestamp': '2024-01-15T11:00:00'},
-    {'transaction_id': 'tx004', 'user_id': 'u001', 'amount': 5000, 'currency': 'EUR',
-     'merchant': 'Electronique', 'country': 'JP', 'card_present': False, 'timestamp': '2024-01-15T13:00:00'},
-    {'transaction_id': 'tx005', 'user_id': 'u002', 'amount': 75, 'currency': 'EUR',
-     'merchant': 'Supermarche', 'country': 'FR', 'card_present': True, 'timestamp': '2024-01-15T14:20:00'},
-    {'transaction_id': 'tx006', 'user_id': 'u002', 'amount': 80, 'currency': 'EUR',
-     'merchant': 'Pharmacie', 'country': 'FR', 'card_present': True, 'timestamp': '2024-01-15T14:25:00'},
-    {'transaction_id': 'tx007', 'user_id': 'u003', 'amount': -100, 'currency': 'EUR',
-     'merchant': 'Inconnu', 'country': 'US', 'card_present': False, 'timestamp': '2024-01-15T15:00:00'},
-    {'transaction_id': 'tx008', 'user_id': 'u004', 'amount': 120, 'currency': 'EUR',
-     'merchant': 'Shop', 'country': 'FR', 'card_present': True, 'timestamp': '2024-01-15T16:00:00'},
+    # === CLIENT u001 - Profil normal FR, puis anomalie JP ===
+    {'transaction_id': 'tx001', 'user_id': 'u001', 'amount': 48,  'currency': 'EUR', 'merchant': 'Boulangerie Martin', 'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T08:10:00'},
+    {'transaction_id': 'tx002', 'user_id': 'u001', 'amount': 55,  'currency': 'EUR', 'merchant': 'Cafe de la Paix',    'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T09:00:00'},
+    {'transaction_id': 'tx003', 'user_id': 'u001', 'amount': 120, 'currency': 'EUR', 'merchant': 'Carrefour',          'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T10:30:00'},
+    {'transaction_id': 'tx004', 'user_id': 'u001', 'amount': 52,  'currency': 'EUR', 'merchant': 'Boulangerie Martin', 'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T11:00:00'},
+    {'transaction_id': 'tx005', 'user_id': 'u001', 'amount': 9800,'currency': 'EUR', 'merchant': 'Electronics Tokyo',  'country': 'JP', 'card_present': False, 'timestamp': '2024-01-15T13:30:00'},
+
+    # === CLIENT u002 - Burst de frequence suspect ===
+    {'transaction_id': 'tx006', 'user_id': 'u002', 'amount': 75,  'currency': 'EUR', 'merchant': 'Supermarche Bio',   'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T14:00:00'},
+    {'transaction_id': 'tx007', 'user_id': 'u002', 'amount': 80,  'currency': 'EUR', 'merchant': 'Pharmacie Centrale','country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T14:00:10'},
+    {'transaction_id': 'tx008', 'user_id': 'u002', 'amount': 95,  'currency': 'EUR', 'merchant': 'Station BP',        'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T14:00:20'},
+    {'transaction_id': 'tx009', 'user_id': 'u002', 'amount': 60,  'currency': 'EUR', 'merchant': 'Quick Burger',      'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T14:00:30'},
+    {'transaction_id': 'tx010', 'user_id': 'u002', 'amount': 110, 'currency': 'EUR', 'merchant': 'Decathlon',         'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T14:00:40'},
+    {'transaction_id': 'tx011', 'user_id': 'u002', 'amount': 88,  'currency': 'EUR', 'merchant': 'Zara',              'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T14:00:50'},
+
+    # === CLIENT u003 - Montant negatif / invalide ===
+    {'transaction_id': 'tx012', 'user_id': 'u003', 'amount': 200, 'currency': 'EUR', 'merchant': 'FNAC',              'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T15:00:00'},
+    {'transaction_id': 'tx013', 'user_id': 'u003', 'amount': -500,'currency': 'EUR', 'merchant': 'Inconnu',           'country': 'US', 'card_present': False, 'timestamp': '2024-01-15T15:05:00'},
+    {'transaction_id': 'tx014', 'user_id': 'u003', 'amount': 0,   'currency': 'EUR', 'merchant': 'Ghost Merchant',    'country': 'CN', 'card_present': False, 'timestamp': '2024-01-15T15:10:00'},
+
+    # === CLIENT u004 - Profil normal ===
+    {'transaction_id': 'tx015', 'user_id': 'u004', 'amount': 35,  'currency': 'EUR', 'merchant': 'Boulangerie Dupont','country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T08:00:00'},
+    {'transaction_id': 'tx016', 'user_id': 'u004', 'amount': 42,  'currency': 'EUR', 'merchant': 'Cafe Renard',       'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T09:30:00'},
+    {'transaction_id': 'tx017', 'user_id': 'u004', 'amount': 38,  'currency': 'EUR', 'merchant': 'Boulangerie Dupont','country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T10:00:00'},
+    {'transaction_id': 'tx018', 'user_id': 'u004', 'amount': 45,  'currency': 'EUR', 'merchant': 'Monoprix',          'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T12:00:00'},
+    {'transaction_id': 'tx019', 'user_id': 'u004', 'amount': 40,  'currency': 'EUR', 'merchant': 'Boulangerie Dupont','country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T16:00:00'},
+
+    # === CLIENT u005 - Deplacement impossible FR -> BR ===
+    {'transaction_id': 'tx020', 'user_id': 'u005', 'amount': 150, 'currency': 'EUR', 'merchant': 'Leclerc',           'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T09:00:00'},
+    {'transaction_id': 'tx021', 'user_id': 'u005', 'amount': 300, 'currency': 'BRL', 'merchant': 'Mercado Livre',     'country': 'BR', 'card_present': False, 'timestamp': '2024-01-15T10:00:00'},
+    {'transaction_id': 'tx022', 'user_id': 'u005', 'amount': 180, 'currency': 'EUR', 'merchant': 'Total Energies',    'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T18:00:00'},
+
+    # === CLIENT u006 - Transactions normales UK ===
+    {'transaction_id': 'tx023', 'user_id': 'u006', 'amount': 65,  'currency': 'GBP', 'merchant': 'Tesco',             'country': 'GB', 'card_present': True,  'timestamp': '2024-01-15T10:00:00'},
+    {'transaction_id': 'tx024', 'user_id': 'u006', 'amount': 72,  'currency': 'GBP', 'merchant': 'Boots',             'country': 'GB', 'card_present': True,  'timestamp': '2024-01-15T11:00:00'},
+    {'transaction_id': 'tx025', 'user_id': 'u006', 'amount': 90,  'currency': 'GBP', 'merchant': 'Marks Spencer',     'country': 'GB', 'card_present': True,  'timestamp': '2024-01-15T14:00:00'},
+
+    # === CLIENT u007 - Gros montant anormal ===
+    {'transaction_id': 'tx026', 'user_id': 'u007', 'amount': 30,  'currency': 'EUR', 'merchant': 'Tabac Presse',      'country': 'FR', 'card_present': True,  'timestamp': '2024-01-14T09:00:00'},
+    {'transaction_id': 'tx027', 'user_id': 'u007', 'amount': 28,  'currency': 'EUR', 'merchant': 'Tabac Presse',      'country': 'FR', 'card_present': True,  'timestamp': '2024-01-14T10:00:00'},
+    {'transaction_id': 'tx028', 'user_id': 'u007', 'amount': 35,  'currency': 'EUR', 'merchant': 'Boulangerie',       'country': 'FR', 'card_present': True,  'timestamp': '2024-01-14T11:00:00'},
+    {'transaction_id': 'tx029', 'user_id': 'u007', 'amount': 12500,'currency':'EUR', 'merchant': 'Luxury Watches',    'country': 'AE', 'card_present': False, 'timestamp': '2024-01-15T22:00:00'},
+
+    # === CLIENT u008 - Normal DE ===
+    {'transaction_id': 'tx030', 'user_id': 'u008', 'amount': 95,  'currency': 'EUR', 'merchant': 'Rewe',              'country': 'DE', 'card_present': True,  'timestamp': '2024-01-15T08:30:00'},
+    {'transaction_id': 'tx031', 'user_id': 'u008', 'amount': 110, 'currency': 'EUR', 'merchant': 'Saturn',            'country': 'DE', 'card_present': True,  'timestamp': '2024-01-15T11:00:00'},
+    {'transaction_id': 'tx032', 'user_id': 'u008', 'amount': 88,  'currency': 'EUR', 'merchant': 'DM Drogerie',       'country': 'DE', 'card_present': True,  'timestamp': '2024-01-15T14:00:00'},
+    {'transaction_id': 'tx033', 'user_id': 'u008', 'amount': 102, 'currency': 'EUR', 'merchant': 'Kaufland',          'country': 'DE', 'card_present': True,  'timestamp': '2024-01-15T17:00:00'},
+
+    # === CLIENT u009 - Test de carte (0.50->0.75->1.00) ===
+    {'transaction_id': 'tx034', 'user_id': 'u009', 'amount': 0.50,'currency': 'EUR', 'merchant': 'Online Test',       'country': 'US', 'card_present': False, 'timestamp': '2024-01-15T03:00:00'},
+    {'transaction_id': 'tx035', 'user_id': 'u009', 'amount': 0.75,'currency': 'EUR', 'merchant': 'Online Test',       'country': 'US', 'card_present': False, 'timestamp': '2024-01-15T03:01:00'},
+    {'transaction_id': 'tx036', 'user_id': 'u009', 'amount': 1.00,'currency': 'EUR', 'merchant': 'Online Test',       'country': 'US', 'card_present': False, 'timestamp': '2024-01-15T03:02:00'},
+    {'transaction_id': 'tx037', 'user_id': 'u009', 'amount': 4500,'currency': 'USD', 'merchant': 'Amazon US',         'country': 'US', 'card_present': False, 'timestamp': '2024-01-15T03:05:00'},
+
+    # === CLIENT u010 - Normal Afrique ===
+    {'transaction_id': 'tx038', 'user_id': 'u010', 'amount': 15000,'currency':'XOF', 'merchant': 'Marche Central',    'country': 'TG', 'card_present': True,  'timestamp': '2024-01-15T09:00:00'},
+    {'transaction_id': 'tx039', 'user_id': 'u010', 'amount': 8000, 'currency':'XOF', 'merchant': 'Orange Money',      'country': 'TG', 'card_present': True,  'timestamp': '2024-01-15T12:00:00'},
+    {'transaction_id': 'tx040', 'user_id': 'u010', 'amount': 12000,'currency':'XOF', 'merchant': 'Station Total',     'country': 'TG', 'card_present': True,  'timestamp': '2024-01-15T15:00:00'},
+
+    # === CLIENT u011 - Deplacement impossible FR->US ===
+    {'transaction_id': 'tx041', 'user_id': 'u011', 'amount': 60,  'currency': 'EUR', 'merchant': 'Auchan',            'country': 'FR', 'card_present': True,  'timestamp': '2024-01-15T07:00:00'},
+    {'transaction_id': 'tx042', 'user_id': 'u011', 'amount': 350, 'currency': 'USD', 'merchant': 'Best Buy',          'country': 'US', 'card_present': False, 'timestamp': '2024-01-15T08:00:00'},
+
+    # === CLIENT u012 - Normal ES ===
+    {'transaction_id': 'tx043', 'user_id': 'u012', 'amount': 55,  'currency': 'EUR', 'merchant': 'Mercadona',         'country': 'ES', 'card_present': True,  'timestamp': '2024-01-15T10:00:00'},
+    {'transaction_id': 'tx044', 'user_id': 'u012', 'amount': 40,  'currency': 'EUR', 'merchant': 'El Corte Ingles',   'country': 'ES', 'card_present': True,  'timestamp': '2024-01-15T13:00:00'},
+    {'transaction_id': 'tx045', 'user_id': 'u012', 'amount': 70,  'currency': 'EUR', 'merchant': 'Zara ES',           'country': 'ES', 'card_present': True,  'timestamp': '2024-01-15T16:00:00'},
+
+    # === CLIENT u013 - Anomalie devise ===
+    {'transaction_id': 'tx046', 'user_id': 'u013', 'amount': 200, 'currency': 'EUR', 'merchant': 'Ikea FR',           'country': 'FR', 'card_present': True,  'timestamp': '2024-01-14T10:00:00'},
+    {'transaction_id': 'tx047', 'user_id': 'u013', 'amount': 220, 'currency': 'EUR', 'merchant': 'Darty',             'country': 'FR', 'card_present': True,  'timestamp': '2024-01-14T14:00:00'},
+    {'transaction_id': 'tx048', 'user_id': 'u013', 'amount': 7500,'currency': 'USD', 'merchant': 'Crypto Exchange',   'country': 'US', 'card_present': False, 'timestamp': '2024-01-15T02:00:00'},
+
+    # === CLIENT u014 - Normal IT ===
+    {'transaction_id': 'tx049', 'user_id': 'u014', 'amount': 85,  'currency': 'EUR', 'merchant': 'Esselunga',         'country': 'IT', 'card_present': True,  'timestamp': '2024-01-15T09:00:00'},
+    {'transaction_id': 'tx050', 'user_id': 'u014', 'amount': 120, 'currency': 'EUR', 'merchant': 'Rinascente',        'country': 'IT', 'card_present': True,  'timestamp': '2024-01-15T15:00:00'},
 ]
 
 current_results = None

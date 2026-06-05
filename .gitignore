@@ -24,6 +24,9 @@ Thumbs.db
 .streamlit/
 .streamlit/cache/
 
+# Cloned submission repo
+fraud-challenge/
+
 # Temporary & Generated files
 *.tmp
 *.log

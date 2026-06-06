@@ -27,6 +27,15 @@ Thumbs.db
 # Cloned submission repo
 fraud-challenge/
 
+# Node / npm
+node_modules/
+package-lock.json
+
+# PowerPoint temp lock files
+~$*.pptx
+~$*.xlsx
+~$*.docx
+
 # Temporary & Generated files
 *.tmp
 *.log

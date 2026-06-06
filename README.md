@@ -1,3 +1,39 @@
+# MemBridge — Memory MCP Challenge
+
+**Équipe : [LUC-cmd](https://github.com/LUC-cmd)** · **Hackathon INTELO2026 · Lomé**
+
+> Serveur MCP de mémoire partagée — réduit les tokens **sans amnésie**.
+
+## Résultats mesurés (benchmark)
+
+| Métrique | Résultat |
+|----------|----------|
+| **Économie tokens** | **79,5 %** |
+| **Questions pièges** | **10/10** |
+| **Tests CI** | **16/16** |
+| **Outils MCP** | **11** (4 obligatoires + 7 bonus) |
+| Mode naïf | 22 381 tokens |
+| MemBridge | 4 580 tokens |
+
+## Démo live (présentation jury)
+
+```powershell
+cd memory-mcp-challenge
+.\scripts\start-demo.ps1
+```
+
+Puis ouvrir : **http://localhost:8765** → cliquer **▶ Tour démo auto**
+
+| Page | URL |
+|------|-----|
+| Dashboard + Console MCP | http://localhost:8765 |
+| Battle naïf vs MemBridge | http://localhost:8765/battle |
+| Pitch slides | http://localhost:8765/pitch |
+
+**Repo GitHub :** https://github.com/LUC-cmd/Hackathon-IT-INTELO
+
+---
+
 # Memory MCP Challenge — FINALE
 
 **Hackathon INTELO2026** — Serveur MCP de mémoire avec benchmark chiffré tokens/qualité.

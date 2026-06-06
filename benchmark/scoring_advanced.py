@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from pathlib import Path
-import json
 
 
 def calculate_score(report: dict) -> dict:
@@ -15,20 +15,27 @@ def calculate_score(report: dict) -> dict:
 
     # CRITÈRES DE SCORING
     # 1. Économie (40 points max)
-    economy_score = min(40, (savings_pct / 70) * 40) if savings_pct >= 70 else (savings_pct / 70) * 30
+    economy_score = (
+        min(40, (savings_pct / 70) * 40) if savings_pct >= 70 else (savings_pct / 70) * 30
+    )
 
     # 2. Qualité (30 points max)
-    quality_points = min(30, (quality_score / 80) * 30) if quality_score >= 80 else (quality_score / 80) * 20
+    quality_points = (
+        min(30, (quality_score / 80) * 30) if quality_score >= 80 else (quality_score / 80) * 20
+    )
 
     # 3. Stabilité (20 points max)
-    naive_per_turn = report.get("naive", {}).get("per_turn_tokens", [])
     memory_per_turn = report.get("memory", {}).get("per_turn_tokens", [])
 
     stability_score = 0
     if memory_per_turn:
         # Check si la courbe stagne (bon) ou croît (mauvais)
-        first_half = sum(memory_per_turn[:len(memory_per_turn)//2]) / max(len(memory_per_turn)//2, 1)
-        second_half = sum(memory_per_turn[len(memory_per_turn)//2:]) / max(len(memory_per_turn) - len(memory_per_turn)//2, 1)
+        first_half = sum(memory_per_turn[: len(memory_per_turn) // 2]) / max(
+            len(memory_per_turn) // 2, 1
+        )
+        second_half = sum(memory_per_turn[len(memory_per_turn) // 2 :]) / max(
+            len(memory_per_turn) - len(memory_per_turn) // 2, 1
+        )
         growth_rate = (second_half / max(first_half, 1)) - 1
 
         if growth_rate < 0.05:  # Quasi-plat = excellent
@@ -65,21 +72,31 @@ def calculate_score(report: dict) -> dict:
 
 def grade_from_score(score: float) -> str:
     """Convertit un score en grade (A+, A, B+, etc)."""
-    if score >= 95: return "S+"
-    if score >= 90: return "A+"
-    if score >= 85: return "A"
-    if score >= 80: return "B+"
-    if score >= 70: return "B"
-    if score >= 60: return "C"
+    if score >= 95:
+        return "S+"
+    if score >= 90:
+        return "A+"
+    if score >= 85:
+        return "A"
+    if score >= 80:
+        return "B+"
+    if score >= 70:
+        return "B"
+    if score >= 60:
+        return "C"
     return "F"
 
 
 def get_percentile(score: float) -> str:
     """Montre où tu es dans le classement."""
-    if score >= 95: return "Top 1%"
-    if score >= 90: return "Top 5%"
-    if score >= 85: return "Top 10%"
-    if score >= 80: return "Top 25%"
+    if score >= 95:
+        return "Top 1%"
+    if score >= 90:
+        return "Top 5%"
+    if score >= 85:
+        return "Top 10%"
+    if score >= 80:
+        return "Top 25%"
     return "Below average"
 
 
@@ -129,7 +146,9 @@ def save_leaderboard_entry(report: dict, run_id: str = None) -> dict:
         leaderboard = []
 
     leaderboard.append(entry)
-    leaderboard = sorted(leaderboard, key=lambda x: x["score"]["total"], reverse=True)[:20]  # Top 20
+    leaderboard = sorted(leaderboard, key=lambda x: x["score"]["total"], reverse=True)[
+        :20
+    ]  # Top 20
 
     leaderboard_path.write_text(json.dumps(leaderboard, indent=2))
 

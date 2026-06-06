@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MemBridge — Pitch 5 min</title>
+  <link rel="stylesheet" href="/dashboard/styles.css" />
+  <style>
+    .pitch { max-width: 900px; margin: 2rem auto; padding: 2rem; }
+    .slide {
+      background: var(--card);
+      border: 2px solid var(--ink);
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow);
+      min-height: 200px;
+    }
+    .slide h2 {
+      font-family: 'Fraunces', serif;
+      font-size: 1.6rem;
+      margin-bottom: 1rem;
+      color: var(--rust);
+    }
+    .slide p, .slide li { line-height: 1.7; color: var(--ink-soft); }
+    .slide ul { margin-left: 1.2rem; }
+    .big-num {
+      font-family: 'Fraunces', serif;
+      font-size: 4rem;
+      font-weight: 800;
+      color: var(--moss);
+    }
+    .nav { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="pitch">
+    <header class="hero" style="border:none">
+      <div class="brand">
+        <div class="logo-mark">M</div>
+        <div>
+          <p class="badge">Pitch jury · 5 minutes</p>
+          <h1>MemBridge</h1>
+        </div>
+      </div>
+      <a href="/" class="btn ghost">← Dashboard</a>
+    </header>
+
+    <section class="slide">
+      <h2>1 — Le problème</h2>
+      <p>Chaque tour, l'agent renvoie <strong>tout l'historique</strong> au LLM.
+         Coût quadratique, latence, saturation du contexte.</p>
+    </section>
+
+    <section class="slide">
+      <h2>2 — Notre solution</h2>
+      <ul>
+        <li><strong>memory_store</strong> — stocke les faits avec tags</li>
+        <li><strong>memory_search</strong> — embeddings multilingues + reranking</li>
+        <li><strong>memory_summarize</strong> — résumé structuré à taille fixe</li>
+        <li><strong>memory_stats</strong> — métriques tokens en temps réel</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <h2>3 — Chiffres réels</h2>
+      <p class="big-num" id="savings-pitch">79%</p>
+      <p>économie de tokens · 10/10 questions pièges · qualité maintenue</p>
+    </section>
+
+    <section class="slide">
+      <h2>4 — Démo live</h2>
+      <ul>
+        <li>Courbes naïf vs MemBridge côte à côte</li>
+        <li>Recherche paraphrase : « identité de l'interlocutrice »</li>
+        <li>Audio dictée → mémoire · Caméra → capture · GPS Lomé</li>
+      </ul>
+    </section>
+
+    <section class="slide">
+      <h2>5 — Pourquoi nous</h2>
+      <ul>
+        <li>6 outils MCP bonus (géo, audio, vidéo, timeline, oubli, traduction)</li>
+        <li>Dashboard multi-modal, design éditorial (pas du violet IA)</li>
+        <li>CI verte : 16 tests + benchmark rejouable</li>
+      </ul>
+    </section>
+
+    <div class="nav">
+      <button class="btn primary" onclick="location.href='/'">Lancer la démo live</button>
+    </div>
+  </div>
+  <script>
+    fetch('/api/report').then(r => r.json()).then(d => {
+      if (d.savings_pct) document.getElementById('savings-pitch').textContent = d.savings_pct + '%';
+    }).catch(() => {});
+  </script>
+</body>
+</html>

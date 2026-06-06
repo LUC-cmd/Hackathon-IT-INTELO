@@ -1,0 +1,12 @@
+[
+  {"query": "identité de l'interlocutrice premium", "expected": "Marie Dupont", "lang": "fr"},
+  {"query": "référence légale du dossier client", "expected": "CTR-2024-8847", "lang": "fr"},
+  {"query": "coordonnées électroniques de contact", "expected": "marie.dupont@email.fr", "lang": "fr"},
+  {"query": "écart tarifaire facturation printemps", "expected": "149,90", "lang": "fr"},
+  {"query": "incident application mobile date", "expected": "12 février", "lang": "fr"},
+  {"query": "who is the premium customer", "expected": "Marie Dupont", "lang": "en"},
+  {"query": "legal contract reference number", "expected": "CTR-2024-8847", "lang": "en"},
+  {"query": "contact email address", "expected": "marie.dupont@email.fr", "lang": "en"},
+  {"query": "billing discrepancy amount", "expected": "149,90", "lang": "en"},
+  {"query": "mobile app bug reported date", "expected": "12 février", "lang": "en"}
+]

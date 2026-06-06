@@ -47,7 +47,11 @@ def reset_stats() -> None:
 
 
 def count_tokens(text: str) -> int:
-    """Estimation tokens via tiktoken (gpt-4o-mini) ou fallback caractères/4."""
+    """Estimation tokens via tiktoken ou fallback caractères/4 (stable en CI)."""
+    import sys
+
+    if sys.version_info >= (3, 14):
+        return max(1, len(text) // 4)
     try:
         import tiktoken
 

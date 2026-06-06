@@ -16,15 +16,18 @@ def simulate_naive_conversation(turns: list[dict]) -> dict:
     """Simule une conversation en mode naïf."""
     history: list[dict] = []
     total_tokens = 0
+    per_turn_tokens: list[int] = []
 
     for turn in turns:
         history.append({"role": turn["role"], "content": turn["content"]})
         _, tokens = build_naive_context(history)
         total_tokens += tokens
+        per_turn_tokens.append(tokens)
 
     return {
         "mode": "naive",
         "turns": len(turns),
         "total_tokens": total_tokens,
+        "per_turn_tokens": per_turn_tokens,
         "tokens_per_turn": [count_tokens(f"[{t['role']}] {t['content']}") for t in turns],
     }

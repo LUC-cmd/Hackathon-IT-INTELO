@@ -1,4 +1,4 @@
-"""Serveur MCP exposant memory_store, memory_search, memory_summarize, memory_stats."""
+"""Serveur MCP MemBridge — 4 outils core + bonus différenciants."""
 
 from __future__ import annotations
 
@@ -14,6 +14,93 @@ from memory_mcp.tools import MemoryTools
 app = Server("memory-mcp")
 tools_handler = MemoryTools()
 
+BONUS_TOOLS = [
+    Tool(
+        name="memory_forget",
+        description="Oubli intelligent — purge souvenirs obsolètes ou redondants.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "session": {"type": "string"},
+                "query": {"type": "string", "description": "Similarité pour cibler l'oubli"},
+                "tag": {"type": "string", "description": "Tag à purger (ex: noise)"},
+                "top_k": {"type": "integer", "default": 5},
+            },
+            "required": ["session"],
+        },
+    ),
+    Tool(
+        name="memory_locate",
+        description="Mémorise un contexte géographique (lat/lon + label).",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "session": {"type": "string"},
+                "latitude": {"type": "number"},
+                "longitude": {"type": "number"},
+                "label": {"type": "string"},
+                "turn": {"type": "integer", "default": 0},
+            },
+            "required": ["session", "latitude", "longitude"],
+        },
+    ),
+    Tool(
+        name="memory_transcribe",
+        description="Stocke une transcription audio/vidéo/appel dans la mémoire.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "session": {"type": "string"},
+                "transcript": {"type": "string"},
+                "source": {
+                    "type": "string",
+                    "enum": ["audio", "video", "call"],
+                    "default": "audio",
+                },
+                "language": {"type": "string", "default": "fr"},
+                "turn": {"type": "integer", "default": 0},
+            },
+            "required": ["session", "transcript"],
+        },
+    ),
+    Tool(
+        name="memory_translate",
+        description="Traduction légère FR↔EN pour agents multilingues.",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "text": {"type": "string"},
+                "target_lang": {"type": "string", "enum": ["fr", "en"], "default": "en"},
+            },
+            "required": ["text"],
+        },
+    ),
+    Tool(
+        name="memory_share",
+        description="Partage de mémoire entre agents/sessions (multi-agent).",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "from_session": {"type": "string"},
+                "to_session": {"type": "string"},
+                "query": {"type": "string"},
+                "top_k": {"type": "integer", "default": 3},
+            },
+            "required": ["from_session", "to_session", "query"],
+        },
+    ),
+    Tool(
+        name="memory_timeline",
+        description="Chronologie des souvenirs (fait, géo, média, message).",
+        inputSchema={
+            "type": "object",
+            "properties": {
+                "session": {"type": "string", "default": "default"},
+            },
+        },
+    ),
+]
+
 
 @app.list_tools()
 async def list_tools() -> list[Tool]:
@@ -28,6 +115,7 @@ async def list_tools() -> list[Tool]:
                     "tags": {"type": "array", "items": {"type": "string"}, "description": "Tags"},
                     "session": {"type": "string", "description": "ID de session"},
                     "turn": {"type": "integer", "description": "Numéro de tour"},
+                    "metadata": {"type": "object", "description": "Métadonnées (geo, source…)"},
                 },
                 "required": ["content"],
             },
@@ -69,6 +157,7 @@ async def list_tools() -> list[Tool]:
             description="Retourne les statistiques de consommation de tokens.",
             inputSchema={"type": "object", "properties": {}},
         ),
+        *BONUS_TOOLS,
     ]
 
 
@@ -80,6 +169,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             tags=arguments.get("tags"),
             session=arguments.get("session", "default"),
             turn=arguments.get("turn", 0),
+            metadata=arguments.get("metadata"),
         )
     elif name == "memory_search":
         result = tools_handler.memory_search(
@@ -94,6 +184,43 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
         )
     elif name == "memory_stats":
         result = tools_handler.memory_stats()
+    elif name == "memory_forget":
+        result = tools_handler.memory_forget(
+            session=arguments["session"],
+            query=arguments.get("query"),
+            tag=arguments.get("tag"),
+            top_k=arguments.get("top_k", 5),
+        )
+    elif name == "memory_locate":
+        result = tools_handler.memory_locate(
+            session=arguments["session"],
+            latitude=arguments["latitude"],
+            longitude=arguments["longitude"],
+            label=arguments.get("label", ""),
+            turn=arguments.get("turn", 0),
+        )
+    elif name == "memory_transcribe":
+        result = tools_handler.memory_transcribe(
+            session=arguments["session"],
+            transcript=arguments["transcript"],
+            source=arguments.get("source", "audio"),
+            language=arguments.get("language", "fr"),
+            turn=arguments.get("turn", 0),
+        )
+    elif name == "memory_translate":
+        result = tools_handler.memory_translate(
+            text=arguments["text"],
+            target_lang=arguments.get("target_lang", "en"),
+        )
+    elif name == "memory_share":
+        result = tools_handler.memory_share(
+            from_session=arguments["from_session"],
+            to_session=arguments["to_session"],
+            query=arguments["query"],
+            top_k=arguments.get("top_k", 3),
+        )
+    elif name == "memory_timeline":
+        result = tools_handler.memory_timeline(session=arguments.get("session", "default"))
     else:
         raise ValueError(f"Outil inconnu : {name}")
 

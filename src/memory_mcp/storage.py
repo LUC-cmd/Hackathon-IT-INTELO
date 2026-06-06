@@ -56,6 +56,11 @@ def _rerank_boost(query: str, content: str, tags: list[str], base_score: float) 
     score = base_score
     lower = content.lower()
 
+    if "noise" in tags:
+        score -= 0.4
+    if "fact" in tags:
+        score += 0.15
+
     if _IDENTITY_QUERY.search(query):
         if _PERSON_NAME.search(content):
             score += 0.18
@@ -65,8 +70,11 @@ def _rerank_boost(query: str, content: str, tags: list[str], base_score: float) 
         score += 0.2
     if _CONTACT_QUERY.search(query) and "@" in content:
         score += 0.2
-    if _BILLING_QUERY.search(query) and re.search(r"\d+[,.]\d+", content):
-        score += 0.15
+    if _BILLING_QUERY.search(query):
+        if re.search(r"\d+[,.]\d+\s*€", content):
+            score += 0.25
+        elif re.search(r"\d+[,.]\d+", content) and "fact" in tags:
+            score += 0.2
     if _INCIDENT_QUERY.search(query) and re.search(
         r"\d{1,2}\s+(?:janvier|f[eé]vrier|mars)|\d{1,2}/\d{1,2}", content, re.I
     ):

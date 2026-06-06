@@ -1,27 +1,27 @@
-"""Serveur web live — dashboard, benchmark, mémoire multi-modale."""
+"""Serveur web live — dashboard, benchmark SSE, mémoire multi-modale."""
 
 from __future__ import annotations
 
+import io
 import json
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from benchmark.harness import _seed_trap_session, run_benchmark, save_report
+from benchmark.live import stream_benchmark
 from demo.export_pdf import generate_pdf_report
 from memory_mcp.tools import MemoryTools
-from fastapi.responses import StreamingResponse
-import io
 
 ROOT = Path(__file__).parent.parent
 DASHBOARD = ROOT / "dashboard"
 RESULTS = ROOT / "benchmark" / "results"
 
-app = FastAPI(title="MemBridge Live", version="2.0.0")
+app = FastAPI(title="MemBridge Live", version="3.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 tools = MemoryTools()
@@ -63,11 +63,27 @@ def pitch() -> FileResponse:
     return FileResponse(DASHBOARD / "pitch.html")
 
 
+@app.get("/battle")
+def battle() -> FileResponse:
+    return FileResponse(DASHBOARD / "battle.html")
+
+
 @app.get("/api/benchmark")
 def api_benchmark() -> dict:
     report = run_benchmark(turn_count=50)
     save_report(report)
     return report
+
+
+@app.get("/api/benchmark/live")
+def api_benchmark_live() -> StreamingResponse:
+    """SSE — benchmark tour par tour pour démo jury."""
+
+    def generate():
+        for chunk in stream_benchmark(turn_count=50):
+            yield chunk
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
 
 
 @app.get("/api/report")
@@ -101,28 +117,30 @@ def api_memory() -> dict:
     }
 
 
-@app.get("/api/timeline")
-def api_timeline() -> dict:
+@app.get("/api/memory/graph")
+def api_memory_graph() -> dict:
+    """Graphe des souvenirs pour visualisation."""
     _ensure_demo_session()
     entries = tools.store.list_session(SESSION)
-    return {
-        "turns": [
-            {
-                "turn": e.turn,
-                "type": (
-                    "fact"
-                    if "fact" in e.tags
-                    else "geo"
-                    if "geo" in e.tags
-                    else "media"
-                    if any(t in e.tags for t in ("audio", "video", "call", "transcript"))
-                    else "msg"
-                ),
-                "preview": e.content[:80],
-            }
-            for e in entries
-        ]
-    }
+    nodes = [
+        {
+            "id": e.id,
+            "label": f"t{e.turn}",
+            "type": (
+                "fact"
+                if "fact" in e.tags
+                else "geo"
+                if "geo" in e.tags
+                else "media"
+                if any(t in e.tags for t in ("audio", "video", "vision", "transcript"))
+                else "msg"
+            ),
+            "preview": e.content[:50],
+        }
+        for e in entries[:40]
+    ]
+    edges = [{"from": nodes[i]["id"], "to": nodes[i + 1]["id"]} for i in range(len(nodes) - 1)]
+    return {"nodes": nodes, "edges": edges}
 
 
 @app.post("/api/locate")
@@ -153,11 +171,11 @@ def api_transcribe(body: TranscribeBody) -> dict:
 def api_vision(body: VisionBody) -> dict:
     _ensure_demo_session()
     return tools.memory_store(
-        content=f"📷 Image capturée : {body.label} ({len(body.image_b64)} chars b64)",
+        content=f"📷 Image : {body.label}",
         tags=["vision", "image", "capture"],
         session=SESSION,
         turn=tools.store.count(SESSION) + 1,
-        metadata={"label": body.label, "has_image": bool(body.image_b64)},
+        metadata={"label": body.label},
     )
 
 
@@ -167,57 +185,26 @@ def api_search(q: str) -> dict:
     return tools.memory_search(query=q, top_k=3, session=SESSION)
 
 
-@app.get("/api/trap/{trap_id}")
-def api_trap(trap_id: int) -> dict:
-    _ensure_demo_session()
-    traps = json.loads((ROOT / "benchmark" / "trap_questions.json").read_text(encoding="utf-8"))
-    if trap_id < 0 or trap_id >= len(traps):
-        return {"error": "invalid trap_id"}
-    trap = traps[trap_id]
-    result = tools.memory_search(trap["query"], top_k=1, session=SESSION)
-    return {"trap": trap, "result": result}
-
-
-@app.get("/api/stats")
-def api_stats() -> dict:
-    """Advanced performance stats for the current session."""
-    _ensure_demo_session()
-    stats = tools.memory_stats()
-    entries = tools.store.list_session(SESSION)
-
-    return {
-        "session": SESSION,
-        "entries_count": len(entries),
-        "total_embeddings": stats.get("embedding_count", 0),
-        "total_searches": stats.get("search_count", 0),
-        "avg_search_latency_ms": stats.get("avg_search_ms", 0),
-        "memory_usage_kb": stats.get("memory_kb", 0),
-        "compression_ratio": stats.get("compression_ratio", 0),
-    }
-
-
 @app.get("/api/export/pdf")
-async def api_export_pdf() -> StreamingResponse:
-    """Export current report as PDF."""
+def api_export_pdf() -> StreamingResponse:
     path = RESULTS / "report.json"
-    if not path.exists():
+    if path.exists():
+        report = json.loads(path.read_text(encoding="utf-8"))
+    else:
         report = run_benchmark()
         save_report(report)
-    else:
-        report = json.loads(path.read_text(encoding="utf-8"))
 
     pdf_bytes = generate_pdf_report(report)
     if not pdf_bytes:
         return StreamingResponse(
-            io.BytesIO(b"PDF generation failed"),
+            io.BytesIO(b"Install: pip install reportlab"),
             media_type="text/plain",
-            headers={"Content-Disposition": "attachment; filename=error.txt"}
         )
 
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
         media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=MemBridge-Report.pdf"}
+        headers={"Content-Disposition": "attachment; filename=MemBridge-Report.pdf"},
     )
 
 

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemBridge - Battle Arena</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a2847 100%);
+            color: #f1f5f9;
+            font-family: system-ui;
+            overflow-x: hidden;
+        }
+        .arena {
+            padding: 2rem;
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 2rem;
+            height: 100vh;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid rgba(99,102,241,0.2);
+            padding-bottom: 1rem;
+        }
+        .header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #818cf8, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .controls {
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 0 0.5rem;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(99,102,241,0.3);
+        }
+        .fighters {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+        .fighter {
+            background: rgba(30,41,59,0.8);
+            border: 2px solid rgba(99,102,241,0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+        .fighter h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(99,102,241,0.2);
+        }
+        .naive h2 { color: #ef4444; }
+        .memory h2 { color: #10b981; }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 6px;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        .metric-val { color: #f1f5f9; }
+        canvas {
+            width: 100% !important;
+            height: 200px !important;
+            margin-top: 1rem;
+        }
+        .status {
+            grid-column: 1 / -1;
+            background: rgba(30,41,59,0.8);
+            border: 2px solid rgba(99,102,241,0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+        }
+        .verdict {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        .winner {
+            background: rgba(16,185,129,0.2);
+            border: 2px solid #10b981;
+            color: #6ee7b7;
+        }
+    </style>
+</head>
+<body>
+    <div class="arena">
+        <div class="header">
+            <h1>BATTLE ARENA</h1>
+            <p>Naive vs MemBridge en temps reel</p>
+            <div class="controls">
+                <button class="btn" onclick="startBattle()">Lancer bataille</button>
+                <button class="btn" onclick="location.reload()">Reset</button>
+            </div>
+        </div>
+
+        <div class="fighters">
+            <div class="fighter naive">
+                <h2>Mode Naif</h2>
+                <div class="metric">
+                    <span>Tokens</span>
+                    <span class="metric-val" id="n-tokens">0</span>
+                </div>
+                <div class="metric">
+                    <span>Cout (EUR)</span>
+                    <span class="metric-val" id="n-cost">0</span>
+                </div>
+                <div class="metric">
+                    <span>Qualite</span>
+                    <span class="metric-val" id="n-qual">0/10</span>
+                </div>
+                <div class="metric">
+                    <span>Tour</span>
+                    <span class="metric-val" id="n-turn">0/50</span>
+                </div>
+                <canvas id="naive-chart"></canvas>
+            </div>
+
+            <div class="fighter memory">
+                <h2>MemBridge</h2>
+                <div class="metric">
+                    <span>Tokens</span>
+                    <span class="metric-val" id="m-tokens">0</span>
+                </div>
+                <div class="metric">
+                    <span>Cout (EUR)</span>
+                    <span class="metric-val" id="m-cost">0</span>
+                </div>
+                <div class="metric">
+                    <span>Qualite</span>
+                    <span class="metric-val" id="m-qual">0/10</span>
+                </div>
+                <div class="metric">
+                    <span>Tour</span>
+                    <span class="metric-val" id="m-turn">0/50</span>
+                </div>
+                <canvas id="memory-chart"></canvas>
+            </div>
+
+            <div class="status">
+                <div id="status" style="font-size: 1.1rem;">Pret pour la bataille</div>
+                <div id="verdict" style="display: none;" class="verdict winner"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/dashboard/battle.js"></script>
+</body>
+</html>

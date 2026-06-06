@@ -6,12 +6,19 @@ from datetime import datetime
 from pathlib import Path
 
 try:
-    from reportlab.lib.pagesizes import letter, A4
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak, Image
-    from reportlab.lib.enums import TA_CENTER, TA_RIGHT, TA_LEFT
     from reportlab.lib import colors
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.lib.units import inch
+    from reportlab.platypus import (
+        Paragraph,
+        SimpleDocTemplate,
+        Spacer,
+        Table,
+        TableStyle,
+    )
+
     HAS_REPORTLAB = True
 except ImportError:
     HAS_REPORTLAB = False
@@ -28,7 +35,9 @@ def generate_pdf_report(report: dict, output_path: Path | None = None) -> bytes 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Document setup
-    doc = SimpleDocTemplate(str(output_path), pagesize=A4, topMargin=0.5*inch, bottomMargin=0.5*inch)
+    doc = SimpleDocTemplate(
+        str(output_path), pagesize=A4, topMargin=0.5 * inch, bottomMargin=0.5 * inch
+    )
     styles = getSampleStyleSheet()
     story = []
 
@@ -56,8 +65,10 @@ def generate_pdf_report(report: dict, output_path: Path | None = None) -> bytes 
     # Header
     story.append(Paragraph("MemBridge", title_style))
     story.append(Paragraph("Rapport de Benchmark — Mémoire Partagée IA", styles["Normal"]))
-    story.append(Paragraph(f"<i>{datetime.now().strftime('%d %B %Y à %H:%M')}</i>", styles["Normal"]))
-    story.append(Spacer(1, 0.3*inch))
+    story.append(
+        Paragraph(f"<i>{datetime.now().strftime('%d %B %Y à %H:%M')}</i>", styles["Normal"])
+    )
+    story.append(Spacer(1, 0.3 * inch))
 
     # Executive summary
     savings_pct = report.get("savings_pct", 0)
@@ -67,9 +78,15 @@ def generate_pdf_report(report: dict, output_path: Path | None = None) -> bytes 
     summary_color = colors.HexColor("#10b981") if is_winner else colors.HexColor("#f59e0b")
     story.append(Paragraph("Verdict", heading_style))
 
-    verdict_text = "✓ HACKATHON GAGNANT — Critères victoire atteints" if is_winner else "⚠️  Objectif non atteint"
-    story.append(Paragraph(f"<b style='color:{summary_color.hexval()}'>{verdict_text}</b>", styles["Normal"]))
-    story.append(Spacer(1, 0.2*inch))
+    verdict_text = (
+        "✓ HACKATHON GAGNANT — Critères victoire atteints"
+        if is_winner
+        else "⚠️  Objectif non atteint"
+    )
+    story.append(
+        Paragraph(f"<b style='color:{summary_color.hexval()}'>{verdict_text}</b>", styles["Normal"])
+    )
+    story.append(Spacer(1, 0.2 * inch))
 
     # Metrics table
     story.append(Paragraph("Métriques Clés", heading_style))
@@ -81,25 +98,34 @@ def generate_pdf_report(report: dict, output_path: Path | None = None) -> bytes 
     metrics_data = [
         ["Métrique", "Naïf", "MemBridge", "Écart"],
         ["Tokens totaux", f"{naive_tokens:,}", f"{memory_tokens:,}", f"-{tokens_saved:,}"],
-        ["Coût estimé (€)", f"{naive_tokens * 0.15 / 1_000_000:.4f}", f"{memory_tokens * 0.15 / 1_000_000:.4f}", f"-{euros_saved:.4f}"],
+        [
+            "Coût estimé (€)",
+            f"{naive_tokens * 0.15 / 1_000_000:.4f}",
+            f"{memory_tokens * 0.15 / 1_000_000:.4f}",
+            f"-{euros_saved:.4f}",
+        ],
         ["Qualité (pièges)", f"{report.get('quality', {}).get('passed', 0)}/10", "N/A", "N/A"],
         ["Économie", "—", "—", f"-{savings_pct}%"],
     ]
 
-    metrics_table = Table(metrics_data, colWidths=[2*inch, 1.2*inch, 1.2*inch, 1.2*inch])
-    metrics_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#C44F28")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 10),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-        ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-        ("GRID", (0, 0), (-1, -1), 1, colors.black),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
-    ]))
+    metrics_table = Table(metrics_data, colWidths=[2 * inch, 1.2 * inch, 1.2 * inch, 1.2 * inch])
+    metrics_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#C44F28")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, 0), 10),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
+                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+                ("GRID", (0, 0), (-1, -1), 1, colors.black),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.lightgrey]),
+            ]
+        )
+    )
     story.append(metrics_table)
-    story.append(Spacer(1, 0.3*inch))
+    story.append(Spacer(1, 0.3 * inch))
 
     # Questions pièges
     story.append(Paragraph("Questions Pièges — Résultats Détaillés", heading_style))
@@ -107,24 +133,30 @@ def generate_pdf_report(report: dict, output_path: Path | None = None) -> bytes 
     trap_data = [["#", "Question", "Attendu", "Résultat"]]
     for i, trap in enumerate(trap_details[:10], 1):
         result = "✓ Réussi" if trap.get("passed") else "✗ Échoué"
-        trap_data.append([
-            str(i),
-            trap.get("query", "—")[:30],
-            trap.get("expected", "—")[:30],
-            result,
-        ])
+        trap_data.append(
+            [
+                str(i),
+                trap.get("query", "—")[:30],
+                trap.get("expected", "—")[:30],
+                result,
+            ]
+        )
 
-    trap_table = Table(trap_data, colWidths=[0.4*inch, 2*inch, 2*inch, 1.2*inch])
-    trap_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2F5242")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("GRID", (0, 0), (-1, -1), 1, colors.grey),
-    ]))
+    trap_table = Table(trap_data, colWidths=[0.4 * inch, 2 * inch, 2 * inch, 1.2 * inch])
+    trap_table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2F5242")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ("GRID", (0, 0), (-1, -1), 1, colors.grey),
+            ]
+        )
+    )
     story.append(trap_table)
-    story.append(Spacer(1, 0.3*inch))
+    story.append(Spacer(1, 0.3 * inch))
 
     # Insights
     insights = report.get("insights", {})
@@ -136,18 +168,30 @@ def generate_pdf_report(report: dict, output_path: Path | None = None) -> bytes 
                 "warning": "#f59e0b",
                 "critical": "#ef4444",
             }.get(insight.get("severity"), "#000000")
-            story.append(Paragraph(
-                f"<b style='color:#{severity_color}'>{insight.get('title')}</b> — {insight.get('description')}",
-                styles["Normal"]
-            ))
-        story.append(Spacer(1, 0.2*inch))
+            title = insight.get("title", "")
+            desc = insight.get("description", "")
+            story.append(
+                Paragraph(
+                    f"<b style='color:#{severity_color}'>{title}</b> — {desc}",
+                    styles["Normal"],
+                )
+            )
+        story.append(Spacer(1, 0.2 * inch))
 
     # Footer
-    story.append(Spacer(1, 0.3*inch))
-    story.append(Paragraph(
-        "<i>MemBridge — Rapport généré automatiquement | Hackathon INTELO 2026</i>",
-        ParagraphStyle("Footer", parent=styles["Normal"], fontSize=8, alignment=TA_CENTER, textColor=colors.grey)
-    ))
+    story.append(Spacer(1, 0.3 * inch))
+    story.append(
+        Paragraph(
+            "<i>MemBridge — Rapport généré automatiquement | Hackathon INTELO 2026</i>",
+            ParagraphStyle(
+                "Footer",
+                parent=styles["Normal"],
+                fontSize=8,
+                alignment=TA_CENTER,
+                textColor=colors.grey,
+            ),
+        )
+    )
 
     # Build PDF
     try:

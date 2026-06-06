@@ -19,9 +19,11 @@
         </div>
       </div>
       <div class="controls">
-        <a href="/pitch" class="btn ghost">Pitch 5min</a>
+        <a href="/battle" class="btn moss">⚡ Battle Live</a>
+        <a href="/pitch" class="btn ghost">Pitch</a>
         <button id="lang-toggle" class="btn ghost">EN</button>
         <button id="present-mode" class="btn ghost" data-i18n="present">Présentation</button>
+        <button id="export-pdf" class="btn ghost">PDF</button>
         <button id="export-json" class="btn ghost">JSON</button>
         <button id="run-benchmark" class="btn primary" data-i18n="run">Lancer benchmark</button>
       </div>
@@ -71,6 +73,17 @@
         <h2 data-i18n="chart_savings">Répartition coût</h2>
         <div class="chart-wrap short"><canvas id="donut-chart"></canvas></div>
         <div class="chart-wrap short"><canvas id="trap-chart"></canvas></div>
+      </article>
+    </section>
+
+    <section class="grid charts-row">
+      <article class="card">
+        <h2>Tokens cumulés (course)</h2>
+        <div class="chart-wrap tall"><canvas id="cumulative-chart"></canvas></div>
+      </article>
+      <article class="card">
+        <h2>Radar performance</h2>
+        <div class="chart-wrap tall"><canvas id="radar-chart"></canvas></div>
       </article>
     </section>
 

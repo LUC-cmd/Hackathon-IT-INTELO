@@ -228,6 +228,95 @@ function renderDonutChart(data) {
   });
 }
 
+function renderCumulativeChart(data) {
+  destroyChart("cumulative");
+  const naive = data.naive?.per_turn_tokens || [];
+  const memory = data.memory?.per_turn_tokens || [];
+  const naiveCum = naive.reduce((a, v, i) => { a.push((a[i - 1] || 0) + v); return a; }, []);
+  const memCum = memory.reduce((a, v, i) => { a.push((a[i - 1] || 0) + v); return a; }, []);
+  charts.cumulative = new Chart(document.getElementById("cumulative-chart"), {
+    type: "line",
+    data: {
+      labels: naive.map((_, i) => i + 1),
+      datasets: [
+        { label: "Naïf cumulé", data: naiveCum, borderColor: PAL.rust, tension: 0.3, fill: false, pointRadius: 0 },
+        { label: "MemBridge cumulé", data: memCum, borderColor: PAL.moss, tension: 0.3, fill: false, pointRadius: 0 },
+      ],
+    },
+    options: { ...chartDefaults, scales: { x: { ticks: { color: PAL.clay } }, y: { ticks: { color: PAL.clay } } } },
+  });
+}
+
+function renderRadarChart(data) {
+  destroyChart("radar");
+  const q = data.quality?.score_pct || 0;
+  const s = Math.min(data.savings_pct || 0, 100);
+  const g = data.memory?.growth_factor ? Math.max(0, 100 - (data.memory.growth_factor - 1) * 200) : 80;
+  const c = data.memory?.compression_ratio ? Math.max(0, 100 - data.memory.compression_ratio * 200) : 80;
+  charts.radar = new Chart(document.getElementById("radar-chart"), {
+    type: "radar",
+    data: {
+      labels: ["Économie", "Qualité", "Stabilité", "Compression"],
+      datasets: [{
+        label: "MemBridge",
+        data: [s, q, g, c],
+        backgroundColor: "rgba(47,82,66,0.2)",
+        borderColor: PAL.moss,
+        borderWidth: 2,
+      }],
+    },
+    options: {
+      ...chartDefaults,
+      scales: { r: { min: 0, max: 100, ticks: { color: PAL.clay }, grid: { color: "rgba(26,23,20,0.1)" } } },
+    },
+  });
+}
+
+function renderCumulativeChart(data) {
+  destroyChart("cumulative");
+  const naive = data.naive?.per_turn_tokens || [];
+  const memory = data.memory?.per_turn_tokens || [];
+  let nSum = 0, mSum = 0;
+  const nCum = naive.map((v) => { nSum += v; return nSum; });
+  const mCum = memory.map((v) => { mSum += v; return mSum; });
+  charts.cumulative = new Chart(document.getElementById("cumulative-chart"), {
+    type: "line",
+    data: {
+      labels: nCum.map((_, i) => i + 1),
+      datasets: [
+        { label: "Naïf cumulé", data: nCum, borderColor: PAL.rust, tension: 0.3, fill: false, pointRadius: 0 },
+        { label: "MemBridge cumulé", data: mCum, borderColor: PAL.moss, tension: 0.3, fill: false, pointRadius: 0 },
+      ],
+    },
+    options: { ...chartDefaults, scales: { x: { ticks: { color: PAL.clay } }, y: { ticks: { color: PAL.clay } } } },
+  });
+}
+
+function renderRadarChart(data) {
+  destroyChart("radar");
+  const q = data.quality?.score_pct || 0;
+  const s = Math.min(data.savings_pct || 0, 100);
+  const g = data.memory?.growth_factor ? Math.max(0, 100 - data.memory.growth_factor * 30) : 80;
+  const c = data.memory?.compression_ratio ? Math.max(0, 100 - data.memory.compression_ratio * 200) : 75;
+  charts.radar = new Chart(document.getElementById("radar-chart"), {
+    type: "radar",
+    data: {
+      labels: ["Économie", "Qualité", "Stabilité", "Compression"],
+      datasets: [{
+        label: "MemBridge",
+        data: [s, q, g, c],
+        backgroundColor: "rgba(47,82,66,0.2)",
+        borderColor: PAL.moss,
+        borderWidth: 2,
+      }],
+    },
+    options: {
+      ...chartDefaults,
+      scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: "rgba(26,23,20,0.1)" } } },
+    },
+  });
+}
+
 function renderTrapChart(quality) {
   destroyChart("trap");
   const details = quality?.details || [];
@@ -319,6 +408,8 @@ function renderReport(data) {
   document.getElementById("quality-bar").style.width = `${data.quality.score_pct}%`;
   renderTokenChart(data);
   renderDonutChart(data);
+  renderCumulativeChart(data);
+  renderRadarChart(data);
   renderTrapChart(data.quality);
   renderBattleBar(data);
   renderTraps(data.quality);
@@ -415,6 +506,10 @@ document.getElementById("audio-zone").onclick = () => {
   window.AudioViz?.start();
   recognition.start();
 };
+
+document.getElementById("export-pdf")?.addEventListener("click", () => {
+  window.open("/api/export/pdf", "_blank");
+});
 
 document.getElementById("export-json")?.addEventListener("click", () => {
   if (!window.__lastReport) return;

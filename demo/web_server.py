@@ -14,7 +14,7 @@ from pydantic import BaseModel
 
 from benchmark.harness import _seed_trap_session, run_benchmark, save_report
 from benchmark.live import stream_benchmark
-from benchmark.scoring_advanced import calculate_score, save_leaderboard_entry, get_leaderboard
+from benchmark.scoring_advanced import calculate_score, get_leaderboard, save_leaderboard_entry
 from demo.export_pdf import generate_pdf_report
 from memory_mcp.tools import MemoryTools
 

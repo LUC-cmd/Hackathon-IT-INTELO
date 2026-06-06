@@ -39,12 +39,41 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Cache embedding models
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/fastembed
+            ~/.cache/huggingface
+          key: embed-${{ runner.os }}-v2
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
+      - name: Pre-download embedding model
+        env:
+          PYTHONPATH: src:.
+        run: |
+          python -c "
+          import time
+          for i in range(6):
+              try:
+                  from memory_mcp.embeddings import embed_text
+                  embed_text('warmup')
+                  print('Model OK')
+                  break
+              except Exception as e:
+                  print(f'Retry {i+1}: {e}')
+                  time.sleep(20 * (i + 1))
+          else:
+              raise SystemExit(1)
+          "
+
       - name: Smoke tests (API + intégrité)
+        env:
+          PYTHONPATH: src:.
         run: pytest tests/test_smoke.py -v --tb=short
 
   regression:
@@ -58,10 +87,37 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Cache embedding models
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/fastembed
+            ~/.cache/huggingface
+          key: embed-${{ runner.os }}-v2
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
+
+      - name: Pre-download embedding model
+        env:
+          PYTHONPATH: src:.
+        run: |
+          python -c "
+          import time
+          for i in range(6):
+              try:
+                  from memory_mcp.embeddings import embed_text
+                  embed_text('warmup')
+                  print('Model OK')
+                  break
+              except Exception as e:
+                  print(f'Retry {i+1}: {e}')
+                  time.sleep(20 * (i + 1))
+          else:
+              raise SystemExit(1)
+          "
 
       - name: Regression tests (finale — squelette insuffisant)
         env:

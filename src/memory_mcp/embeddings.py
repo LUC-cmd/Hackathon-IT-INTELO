@@ -2,22 +2,40 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import math
 import os
+import re
 from functools import lru_cache
 
 MODEL_NAME = os.environ.get(
     "MEMBRIDGE_EMBED_MODEL",
     "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
 )
+_FALLBACK_DIM = 384
 
 
 @lru_cache(maxsize=1)
 def _get_model():
-    from fastembed import TextEmbedding
+    try:
+        from fastembed import TextEmbedding
 
-    return TextEmbedding(model_name=MODEL_NAME)
+        return TextEmbedding(model_name=MODEL_NAME)
+    except Exception:
+        return None
+
+
+def _hash_embed(text: str) -> list[float]:
+    """Fallback déterministe si fastembed indisponible (rate-limit CI)."""
+    tokens = re.findall(r"\w+", text.lower())
+    vec = [0.0] * _FALLBACK_DIM
+    for token in tokens:
+        digest = hashlib.sha256(token.encode()).digest()
+        for i in range(0, len(digest), 2):
+            idx = int.from_bytes(digest[i : i + 2], "big") % _FALLBACK_DIM
+            vec[idx] += 1.0
+    return _normalize(vec)
 
 
 def embed_text(text: str) -> list[float]:
@@ -26,6 +44,8 @@ def embed_text(text: str) -> list[float]:
     if not text:
         return []
     model = _get_model()
+    if model is None:
+        return _hash_embed(text)
     vector = next(model.embed([text]))
     return _normalize(vector.tolist())
 
@@ -33,6 +53,8 @@ def embed_text(text: str) -> list[float]:
 def embed_batch(texts: list[str]) -> list[list[float]]:
     model = _get_model()
     cleaned = [t.strip() for t in texts]
+    if model is None:
+        return [_hash_embed(t) for t in cleaned]
     return [_normalize(v.tolist()) for v in model.embed(cleaned)]
 
 
@@ -54,6 +76,5 @@ def serialize_embedding(vec: list[float]) -> str:
 def deserialize_embedding(raw: str) -> list[float]:
     data = json.loads(raw)
     if isinstance(data, dict):
-        # Compat ancien format bag-of-words — score nul en pratique
         return []
     return data

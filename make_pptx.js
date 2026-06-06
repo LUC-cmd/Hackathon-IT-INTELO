@@ -41,7 +41,7 @@ function footer(slide, n) {
     x:0.35, y:5.33, w:8.5, h:0.2,
     fontSize:7.5, fontFace:"Calibri", color:C.muted,
   });
-  slide.addText(`${n} / 12`, {
+  slide.addText(`${n} / 15`, {
     x:9.0, y:5.33, w:0.7, h:0.2,
     fontSize:7.5, fontFace:"Calibri", color:C.muted, align:"right",
   });
@@ -377,7 +377,442 @@ function callout(slide, txt, x, y, w=2.2, color=C.blue) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// SLIDE 5 — DASHBOARD (wireframe annoté)
+// SLIDE 5 — L'ALGORITHME DE SCORE : COMMENT ÇA CALCULE
+// ═══════════════════════════════════════════════════════════════════════════════
+{
+  const s = pres.addSlide();
+  s.background = {color:C.white};
+  header(s, "L'Algorithme de Score — Comment le Système Décide");
+
+  s.addText("Le score de fraude n'est pas une décision binaire OUI/NON. C'est un calcul progressif : chaque signal ajoute du poids jusqu'à dépasser le seuil d'alerte (0.5).", {
+    x:0.3, y:0.78, w:9.4, h:0.3,
+    fontSize:11, fontFace:"Calibri", color:C.muted, align:"center", italic:true,
+  });
+
+  // ── Exemple concret tx005 (gauche) ─────────────────────────────────────────
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:0.3, y:1.12, w:5.1, h:0.38,
+    fill:{color:C.navy}, line:{color:C.navy, width:0},
+  });
+  s.addText("📋  Exemple réel : transaction tx005 — Score final = 0.75 → FRAUDE", {
+    x:0.38, y:1.12, w:5.0, h:0.38,
+    fontSize:10, fontFace:"Calibri", bold:true, color:C.white, valign:"middle", margin:0,
+  });
+
+  const steps = [
+    {sig:"Score de départ",              add:0,    total:0.00, color:C.muted,   bg:C.bg,      bar:0},
+    {sig:"Montant 9 800€ > seuil IQR 222€ (×43 le seuil)", add:0.40, total:0.40, color:C.orange, bg:C.orangeL, bar:40},
+    {sig:"Paiement sans carte (client toujours en magasin)", add:0.10, total:0.50, color:C.orange, bg:"fff3e0",  bar:50},
+    {sig:"Géographie impossible : FR → JP en 2h",           add:0.25, total:0.75, color:C.red,    bg:C.redL,    bar:75},
+    {sig:"Résultat final",               add:null, total:0.75, color:C.red,    bg:"fde8e8",   bar:75},
+  ];
+
+  steps.forEach((step, i) => {
+    const y = 1.58 + i * 0.62;
+    s.addShape(pres.shapes.RECTANGLE, {
+      x:0.3, y, w:5.1, h:0.54,
+      fill:{color:step.bg}, line:{color:C.border, width:0.5},
+    });
+    // Signal name
+    s.addText(step.sig, {
+      x:0.38, y:y+0.04, w:3.0, h:0.26,
+      fontSize:i===4?11:10, fontFace:"Calibri", bold:i===0||i===4,
+      color:step.color,
+    });
+    // +score badge
+    if (step.add !== null && step.add > 0) {
+      s.addShape(pres.shapes.RECTANGLE, {
+        x:3.42, y:y+0.06, w:0.62, h:0.28,
+        fill:{color:step.color}, line:{color:step.color, width:0},
+      });
+      s.addText(`+${step.add.toFixed(2)}`, {
+        x:3.42, y:y+0.06, w:0.62, h:0.28,
+        fontSize:10, fontFace:"Calibri", bold:true, color:C.white,
+        align:"center", valign:"middle", margin:0,
+      });
+    }
+    // Running total
+    s.addText(i===4?"SCORE FINAL :":i===0?"":"→", {
+      x:4.1, y:y+0.06, w:0.4, h:0.28,
+      fontSize:10, fontFace:"Calibri", color:C.muted, align:"center",
+    });
+    s.addText(step.total.toFixed(2), {
+      x:4.55, y:y+0.04, w:0.75, h:0.32,
+      fontSize:i===4?16:12, fontFace:"Calibri", bold:true, color:step.color,
+    });
+    // Mini progress bar
+    if (step.bar > 0) {
+      s.addShape(pres.shapes.RECTANGLE, {
+        x:0.38, y:y+0.38, w:4.7, h:0.1,
+        fill:{color:C.border}, line:{color:C.border, width:0},
+      });
+      s.addShape(pres.shapes.RECTANGLE, {
+        x:0.38, y:y+0.38, w:4.7*step.bar/100, h:0.1,
+        fill:{color:step.bar>=50?C.red:C.orange}, line:{color:step.bar>=50?C.red:C.orange, width:0},
+      });
+    }
+  });
+
+  // Seuil badge
+  s.addShape(pres.shapes.LINE, {
+    x:0.38+4.7*0.5, y:1.58, w:0, h:3.1+0.1,
+    line:{color:C.red, width:1.5, dashType:"dash"},
+  });
+  s.addText("⚠ Seuil 0.50", {
+    x:2.67, y:1.52, w:1.3, h:0.28,
+    fontSize:9, fontFace:"Calibri", bold:true, color:C.red, align:"center",
+  });
+
+  // ── Règles de scoring (droite) ──────────────────────────────────────────────
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:5.6, y:1.12, w:4.1, h:0.38,
+    fill:{color:C.navy}, line:{color:C.navy, width:0},
+  });
+  s.addText("⚙️  Règles de pondération du moteur", {
+    x:5.68, y:1.12, w:3.94, h:0.38,
+    fontSize:10, fontFace:"Calibri", bold:true, color:C.white, valign:"middle", margin:0,
+  });
+
+  const rules = [
+    {rule:"Champs manquants / Montant ≤ 0", w:"1.00", color:C.red,    note:"STOP immédiat"},
+    {rule:"Montant dépasse le seuil IQR",   w:"+0.20 à +0.40", color:C.orange, note:"selon l'excès"},
+    {rule:"Z-score > 3.5 (fort écart)",     w:"+0.35", color:C.orange, note:"anomalie forte"},
+    {rule:"Z-score > 2.5 (écart modéré)",   w:"+0.15", color:C.yellowB,note:"avec 3+ historique"},
+    {rule:"Géographie impossible",          w:"+0.25", color:C.blue,  note:"> 900 km/h"},
+    {rule:"Déplacement rapide",             w:"+0.15", color:C.blue,  note:"< 2h, > 500 km"},
+    {rule:"Fréquence burst (≥ 5 TX/60s)",  w:"+0.55", color:C.red,   note:"attaque robot"},
+    {rule:"Transaction dupliquée",          w:"+0.40", color:C.orange, note:"même ID ou signature"},
+    {rule:"Paiement sans carte (profil)",   w:"+0.10", color:C.muted, note:"signal faible"},
+  ];
+
+  rules.forEach((r, i) => {
+    const y = 1.58 + i * 0.36;
+    s.addShape(pres.shapes.RECTANGLE, {
+      x:5.6, y, w:4.1, h:0.32,
+      fill:{color:i%2===0?C.bg:C.white}, line:{color:C.border, width:0.4},
+    });
+    s.addShape(pres.shapes.RECTANGLE, {
+      x:5.6, y, w:0.05, h:0.32,
+      fill:{color:r.color}, line:{color:r.color, width:0},
+    });
+    s.addText(r.rule, {
+      x:5.68, y:y+0.04, w:2.45, h:0.24,
+      fontSize:8.5, fontFace:"Calibri", color:C.text,
+    });
+    s.addShape(pres.shapes.RECTANGLE, {
+      x:8.15, y:y+0.03, w:0.85, h:0.26,
+      fill:{color:r.color}, line:{color:r.color, width:0},
+    });
+    s.addText(r.w, {
+      x:8.15, y:y+0.03, w:0.85, h:0.26,
+      fontSize:8, fontFace:"Calibri", bold:true, color:C.white,
+      align:"center", valign:"middle", margin:0,
+    });
+    s.addText(r.note, {
+      x:9.02, y:y+0.04, w:0.62, h:0.24,
+      fontSize:7.5, fontFace:"Calibri", color:C.muted, italic:true,
+    });
+  });
+
+  // Formula box
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:5.6, y:4.82, w:4.1, h:0.4,
+    fill:{color:C.navy}, line:{color:C.navy, width:0},
+  });
+  s.addText("score = min(1.0,  Σ signaux)  —  is_suspicious = score ≥ 0.5", {
+    x:5.65, y:4.83, w:4.0, h:0.38,
+    fontSize:9.5, fontFace:"Calibri", bold:true, color:C.white,
+    align:"center", valign:"middle", margin:0,
+  });
+
+  enclair(s, "Aucune règle magique — juste des mathématiques : chaque signal ajoute du poids. Si le total dépasse 0.5, la transaction est suspecte. Simple et transparent.");
+  footer(s, 5);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SLIDE 6 — LES 3 CERVEAUX STATISTIQUES (IQR, Z-SCORE, RATIO)
+// ═══════════════════════════════════════════════════════════════════════════════
+{
+  const s = pres.addSlide();
+  s.background = {color:C.white};
+  header(s, "Les 3 Méthodes Statistiques — La Science Derrière le Score");
+
+  s.addText("ShieldAI ULTRA n'invente pas les règles — il applique des méthodes mathématiques éprouvées pour rendre la détection objective et calibrée.", {
+    x:0.3, y:0.78, w:9.4, h:0.28,
+    fontSize:11, fontFace:"Calibri", color:C.muted, align:"center", italic:true,
+  });
+
+  // ── MÉTHODE 1 : IQR ────────────────────────────────────────────────────────
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:0.3, y:1.1, w:2.95, h:3.68,
+    fill:{color:C.orangeL}, line:{color:C.orange, width:1.5},
+  });
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:0.3, y:1.1, w:2.95, h:0.48,
+    fill:{color:C.orange}, line:{color:C.orange, width:0},
+  });
+  s.addText("📊  Méthode 1 : IQR", {
+    x:0.38, y:1.1, w:2.79, h:0.48,
+    fontSize:12, fontFace:"Calibri", bold:true, color:C.white, valign:"middle", margin:0,
+  });
+  s.addText("Interquartile Range — Borne supérieure robuste", {
+    x:0.38, y:1.62, w:2.79, h:0.3,
+    fontSize:9, fontFace:"Calibri", color:C.orange, italic:true,
+  });
+
+  // Box plot visuel simplifié
+  const bpY = 2.0;
+  // Line
+  s.addShape(pres.shapes.LINE, {x:0.5, y:bpY+0.3, w:2.55, h:0, line:{color:C.muted, width:1}});
+  // Box Q1-Q3
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:1.0, y:bpY+0.1, w:1.1, h:0.4,
+    fill:{color:C.orange, transparency:60}, line:{color:C.orange, width:1.5},
+  });
+  // Median
+  s.addShape(pres.shapes.LINE, {x:1.4, y:bpY+0.1, w:0, h:0.4, line:{color:C.orange, width:2}});
+  // Outlier
+  s.addShape(pres.shapes.OVAL, {x:2.8, y:bpY+0.18, w:0.18, h:0.18, fill:{color:C.red}, line:{color:C.red, width:0}});
+  // Labels
+  s.addText("Q1", {x:0.9, y:bpY+0.52, w:0.3, h:0.22, fontSize:8, fontFace:"Calibri", color:C.orange, align:"center"});
+  s.addText("Q3", {x:2.05, y:bpY+0.52, w:0.3, h:0.22, fontSize:8, fontFace:"Calibri", color:C.orange, align:"center"});
+  s.addText("Fence", {x:2.5, y:bpY-0.02, w:0.55, h:0.22, fontSize:8, fontFace:"Calibri", color:C.muted, align:"center"});
+  // Fence line
+  s.addShape(pres.shapes.LINE, {x:2.7, y:bpY, w:0, h:0.6, line:{color:C.red, width:1.5, dashType:"dash"}});
+  s.addText("🔴 ALERTE !", {x:2.68, y:bpY+0.12, w:0.7, h:0.2, fontSize:8, fontFace:"Calibri", color:C.red, bold:true});
+
+  s.addText([
+    {text:"Formule : ", options:{bold:true, color:C.orange, fontSize:9}},
+    {text:"Fence = Q3 + 1.5 × IQR\n", options:{color:C.text, fontSize:9, breakLine:true}},
+    {text:"Q1", options:{bold:true, color:C.orange, fontSize:9}},
+    {text:" = 25e percentile des montants historiques\n", options:{color:C.text, fontSize:9, breakLine:true}},
+    {text:"Q3", options:{bold:true, color:C.orange, fontSize:9}},
+    {text:" = 75e percentile — IQR = Q3 − Q1\n\n", options:{color:C.text, fontSize:9, breakLine:true}},
+    {text:"Exemple : ", options:{bold:true, color:C.orange, fontSize:9}},
+    {text:"historique 20€→100€\nQ1=45, Q3=85, IQR=40\nFence = 85 + 60 = 145€\nMontant 9800€ → ALERTE !", options:{color:C.text, fontSize:9}},
+  ], {
+    x:0.38, y:bpY+0.82, w:2.75, h:1.95,
+    fontFace:"Calibri", valign:"top",
+  });
+
+  // ── MÉTHODE 2 : Z-SCORE ────────────────────────────────────────────────────
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:3.53, y:1.1, w:2.95, h:3.68,
+    fill:{color:"f8faff"}, line:{color:C.blue, width:1.5},
+  });
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:3.53, y:1.1, w:2.95, h:0.48,
+    fill:{color:C.blue}, line:{color:C.blue, width:0},
+  });
+  s.addText("📈  Méthode 2 : Z-Score", {
+    x:3.61, y:1.1, w:2.79, h:0.48,
+    fontSize:12, fontFace:"Calibri", bold:true, color:C.white, valign:"middle", margin:0,
+  });
+  s.addText("Écart normalisé par rapport à la moyenne client", {
+    x:3.61, y:1.62, w:2.79, h:0.3,
+    fontSize:9, fontFace:"Calibri", color:C.blue, italic:true,
+  });
+
+  // Bell curve simplifié avec rectangles de hauteur croissante
+  const bellX = 3.65, bellY = 2.08, bellW = 0.22;
+  const heights = [0.05,0.12,0.25,0.4,0.52,0.6,0.58,0.45,0.28,0.14,0.06];
+  const bellColors = ["dc2626","dc2626","d97706","d97706","16a34a","16a34a","16a34a","d97706","d97706","dc2626","dc2626"];
+  heights.forEach((h, i) => {
+    s.addShape(pres.shapes.RECTANGLE, {
+      x:bellX+i*bellW, y:bellY+(0.62-h), w:bellW-0.02, h,
+      fill:{color:bellColors[i], transparency:40}, line:{color:bellColors[i], width:0},
+    });
+  });
+  // Labels on bell
+  s.addText("Zone normale", {x:3.9, y:2.72, w:1.35, h:0.2, fontSize:8, fontFace:"Calibri", color:C.green, align:"center"});
+  s.addText("Z>2.5", {x:3.62, y:2.75, w:0.45, h:0.18, fontSize:8, fontFace:"Calibri", color:C.orange, bold:true});
+  s.addText("Z>2.5", {x:5.45, y:2.75, w:0.45, h:0.18, fontSize:8, fontFace:"Calibri", color:C.orange, bold:true});
+  s.addText("Z>3.5", {x:3.62, y:2.95, w:0.45, h:0.18, fontSize:8, fontFace:"Calibri", color:C.red, bold:true});
+
+  s.addText([
+    {text:"Formule : ", options:{bold:true, color:C.blue, fontSize:9}},
+    {text:"Z = (montant − moyenne) / écart-type\n\n", options:{color:C.text, fontSize:9, breakLine:true}},
+    {text:"Z < 2.5", options:{bold:true, color:C.green, fontSize:9}},
+    {text:" → Normal, pas d'alarme\n", options:{color:C.text, fontSize:9, breakLine:true}},
+    {text:"Z > 2.5", options:{bold:true, color:C.orange, fontSize:9}},
+    {text:" → Signal modéré (+0.15)\n", options:{color:C.text, fontSize:9, breakLine:true}},
+    {text:"Z > 3.5", options:{bold:true, color:C.red, fontSize:9}},
+    {text:" → Signal fort (+0.35)\n\n", options:{color:C.text, fontSize:9, breakLine:true}},
+    {text:"Exemple : ", options:{bold:true, color:C.blue, fontSize:9}},
+    {text:"moy=86€, std=21€\nMontant 500€\nZ=(500-86)/21 = 19.7\n→ Très anormal → ALERTE !", options:{color:C.text, fontSize:9}},
+  ], {
+    x:3.61, y:3.1, w:2.79, h:1.65,
+    fontFace:"Calibri", valign:"top",
+  });
+
+  // ── MÉTHODE 3 : RATIO ──────────────────────────────────────────────────────
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:6.75, y:1.1, w:2.95, h:3.68,
+    fill:{color:C.greenBg}, line:{color:C.green, width:1.5},
+  });
+  s.addShape(pres.shapes.RECTANGLE, {
+    x:6.75, y:1.1, w:2.95, h:0.48,
+    fill:{color:C.green}, line:{color:C.green, width:0},
+  });
+  s.addText("🔢  Méthode 3 : Ratio", {
+    x:6.83, y:1.1, w:2.79, h:0.48,
+    fontSize:12, fontFace:"Calibri", bold:true, color:C.white, valign:"middle", margin:0,
+  });
+  s.addText("Filet de sécurité quand std = 0 (historique uniforme)", {
+    x:6.83, y:1.62, w:2.79, h:0.3,
+    fontSize:9, fontFace:"Calibri", color:C.green, italic:true,
+  });
+
+  // Ratio visual (3 bars comparing)
+  const bars = [{v:50,lbl:"Historique\nmoyen 50€"},{v:150,lbl:"3× max\n= 150€"},{v:500,lbl:"Montant\nactuel 500€"}];
+  bars.forEach((b, i) => {
+    const bx = 6.88+i*0.88;
+    const fullH = 1.2;
+    const h = (b.v/500)*fullH;
+    const colr = i===2?C.red:(i===1?C.orange:C.green);
+    s.addShape(pres.shapes.RECTANGLE, {
+      x:bx, y:2.78-h+fullH-fullH, w:0.7, h,
+      fill:{color:colr, transparency:30}, line:{color:colr, width:1},
+    });
+    // stack from bottom
+    s.addShape(pres.shapes.RECTANGLE, {
+      x:bx, y:3.38-h, w:0.7, h,
+      fill:{color:colr, transparency:20}, line:{color:colr, width:1},
+    });
+    s.addText(`${b.v}€`, {
+      x:bx, y:3.38-h-0.24, w:0.7, h:0.22,
+      fontSize:10, fontFace:"Calibri", bold:true, color:colr, align:"center",
+    });
+    s.addText(b.lbl, {
+      x:bx, y:3.42, w:0.7, h:0.4,
+      fontSize:8, fontFace:"Calibri", color:C.muted, align:"center",
+    });
+  });
+  // Arrow 3x
+  s.addText("×3", {x:7.82, y:2.9, w:0.5, h:0.35, fontSize:16, fontFace:"Calibri", bold:true, color:C.orange, align:"center"});
+  s.addText("×10", {x:8.62, y:2.55, w:0.5, h:0.35, fontSize:14, fontFace:"Calibri", bold:true, color:C.red, align:"center"});
+
+  s.addText([
+    {text:"Quand std = 0 : ", options:{bold:true, color:C.green, fontSize:9}},
+    {text:"tous les montants historiques sont identiques — IQR et Z-score ne fonctionnent pas.\n\n", options:{color:C.text, fontSize:9, breakLine:true}},
+    {text:"Le ratio prend le relais :\n", options:{color:C.text, fontSize:9, breakLine:true}},
+    {text:"montant > max × 3", options:{bold:true, color:C.orange, fontSize:9}},
+    {text:" → +0.15\n", options:{color:C.text, fontSize:9, breakLine:true}},
+    {text:"montant > max × 10", options:{bold:true, color:C.red, fontSize:9}},
+    {text:" → +0.55\n\n", options:{color:C.text, fontSize:9, breakLine:true}},
+    {text:"Exemple : ", options:{bold:true, color:C.green, fontSize:9}},
+    {text:"5 achats de 50€ exactement puis 5000€\nRatio = 100× → +0.55 → ALERTE !", options:{color:C.text, fontSize:9}},
+  ], {
+    x:6.83, y:3.87, w:2.79, h:0.88,
+    fontFace:"Calibri", valign:"top",
+  });
+
+  enclair(s, "IQR détecte les extrêmes absolus. Z-Score détecte les écarts relatifs à la moyenne. Ratio prend le relais quand les deux premiers ne peuvent pas calculer. Triple filet de sécurité.");
+  footer(s, 6);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SLIDE 7 — LA CRÉATIVITÉ DERRIÈRE SHIELDAI ULTRA
+// ═══════════════════════════════════════════════════════════════════════════════
+{
+  const s = pres.addSlide();
+  s.background = {color:C.white};
+  header(s, "La Créativité — 5 Innovations qui Rendent ShieldAI ULTRA Unique");
+
+  s.addText("Au-delà des algorithmes classiques, ShieldAI ULTRA a été pensé avec 5 choix créatifs qui le distinguent de tout ce qui existe.", {
+    x:0.3, y:0.78, w:9.4, h:0.28,
+    fontSize:11, fontFace:"Calibri", color:C.muted, align:"center", italic:true,
+  });
+
+  const innovations = [
+    {
+      num:"01", icon:"🧬", title:"Profil ADN par Client",
+      color:C.blue, bg:C.blueL,
+      problem:"Un système classique applique la même règle à tout le monde. Si le seuil est 500€, Bill Gates ET vous déclenchez la même alarme.",
+      solution:"ShieldAI ULTRA construit un profil unique pour chaque client. Votre seuil d'alerte est calculé sur VOS transactions passées — pas sur celles des autres.",
+      wow:"→ Si vous dépensez toujours 50€ et payez 5000€, l'alarme sonne. Si vous êtes habitué à 5000€, elle ne sonne pas.",
+    },
+    {
+      num:"02", icon:"🔗", title:"Défense en Profondeur — 7 Verrous Indépendants",
+      color:C.orange, bg:C.orangeL,
+      problem:"Un seul détecteur peut être contourné. Un fraudeur qui connaît la règle peut l'éviter.",
+      solution:"7 signaux totalement indépendants analysent chaque transaction en parallèle. Même si le fraudeur évite 6 signaux, le 7e suffit à déclencher l'alerte.",
+      wow:"→ Comme une porte avec 7 serrures différentes. Il suffit qu'une résiste.",
+    },
+    {
+      num:"03", icon:"🐍", title:"Pure Python — La Contrainte Devient une Force",
+      color:C.green, bg:C.greenBg,
+      problem:"Python 3.14 est incompatible avec numpy et pandas (les bibliothèques standards de data science). Tout le monde a abandonné ces outils.",
+      solution:"Nous avons tout réécrit en Python pur : calcul IQR, Z-score, distances géographiques — sans UNE SEULE bibliothèque externe. Code 100% portable.",
+      wow:"→ Notre code fonctionne sur n'importe quelle machine avec Python 3.14. Aucune installation requise.",
+    },
+    {
+      num:"04", icon:"💬", title:"L'IA qui Parle — Alertes Auto-Explicatives",
+      color:C.navy, bg:"e2e8f0",
+      problem:"La plupart des systèmes disent simplement 'FRAUDE'. L'analyste doit alors chercher POURQUOI — ce qui prend du temps et coûte de l'argent.",
+      solution:"Chaque alerte inclut automatiquement la raison précise en français : 'Montant 7× la moyenne + déplacement impossible FR→JP en 1h'. L'analyste sait tout d'un coup d'œil.",
+      wow:"→ Le système se justifie lui-même. Décision prise en 5 secondes, pas en 5 minutes.",
+    },
+    {
+      num:"05", icon:"🎚️", title:"Sensibilité Ajustable en Temps Réel",
+      color:C.red, bg:C.redL,
+      problem:"Les systèmes classiques ont un seuil fixe. Pendant le Black Friday, vous avez 10× plus de transactions — le système explose en fausses alertes.",
+      solution:"Le curseur de sensibilité (0 → 1) permet d'ajuster le seuil d'alerte EN DIRECT sans redémarrer le système. L'opérateur adapte la vigilance au contexte.",
+      wow:"→ Nuit calme : seuil à 0.3 (strict). Black Friday : seuil à 0.7 (souple). Un seul glissement de curseur.",
+    },
+  ];
+
+  innovations.forEach((innov, i) => {
+    const col = i < 3 ? 0 : 1;
+    const row = i < 3 ? i : i - 3;
+    const x   = 0.3 + col * 4.85;
+    const y   = 1.12 + row * 1.22;
+
+    s.addShape(pres.shapes.RECTANGLE, {
+      x, y, w:4.65, h:1.14,
+      fill:{color:innov.bg}, line:{color:innov.color, width:1},
+    });
+    s.addShape(pres.shapes.RECTANGLE, {
+      x, y, w:0.07, h:1.14,
+      fill:{color:innov.color}, line:{color:innov.color, width:0},
+    });
+
+    // Number + icon
+    s.addText(`${innov.num}`, {
+      x:x+0.14, y:y+0.04, w:0.4, h:0.3,
+      fontSize:9, fontFace:"Calibri", bold:true, color:innov.color,
+    });
+    s.addText(innov.icon, {
+      x:x+0.14, y:y+0.3, w:0.4, h:0.35,
+      fontSize:18, align:"center",
+    });
+
+    // Title
+    s.addText(innov.title, {
+      x:x+0.62, y:y+0.04, w:3.95, h:0.28,
+      fontSize:11.5, fontFace:"Calibri", bold:true, color:innov.color,
+    });
+    // Problem + Solution condensed
+    s.addText(`❌ ${innov.problem}`, {
+      x:x+0.62, y:y+0.32, w:3.95, h:0.28,
+      fontSize:8, fontFace:"Calibri", color:C.muted,
+    });
+    s.addText(`✅ ${innov.solution}`, {
+      x:x+0.62, y:y+0.6, w:3.95, h:0.28,
+      fontSize:8, fontFace:"Calibri", color:C.text,
+    });
+    s.addText(innov.wow, {
+      x:x+0.62, y:y+0.86, w:3.95, h:0.24,
+      fontSize:8, fontFace:"Calibri", color:innov.color, italic:true, bold:true,
+    });
+  });
+
+  enclair(s, "Ces 5 innovations ne sont pas des gadgets — chacune résout un problème réel que les systèmes classiques ne peuvent pas résoudre. C'est ça, la créativité technique.");
+  footer(s, 7);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SLIDE 8 — DASHBOARD (wireframe annoté)
 // ═══════════════════════════════════════════════════════════════════════════════
 {
   const s = pres.addSlide();
@@ -519,7 +954,7 @@ function callout(slide, txt, x, y, w=2.2, color=C.blue) {
   });
   callout(s, "Le système rédige lui-même ses conclusions en texte clair", 6.0, 4.78, 3.9);
 
-  footer(s, 5);
+  footer(s, 8);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -629,7 +1064,7 @@ function callout(slide, txt, x, y, w=2.2, color=C.blue) {
   });
 
   enclair(s, "Ces 4 graphiques se lisent comme un tableau de bord de voiture : vert = tout va bien, orange = attention, rouge = problème urgent.");
-  footer(s, 6);
+  footer(s, 9);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -729,7 +1164,7 @@ function callout(slide, txt, x, y, w=2.2, color=C.blue) {
   });
 
   enclair(s, "Ces boutons ne nécessitent aucune compétence technique. Un clic suffit pour filtrer, analyser ou exporter — tout est pensé pour être intuitif.");
-  footer(s, 7);
+  footer(s, 10);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -824,7 +1259,7 @@ function callout(slide, txt, x, y, w=2.2, color=C.blue) {
   });
 
   enclair(s, "L'analyste n'a pas à deviner : le système lui dit QUOI s'est passé, POURQUOI c'est suspect, et QUOI faire. Tout est prêt pour agir.");
-  footer(s, 8);
+  footer(s, 11);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -924,7 +1359,7 @@ function callout(slide, txt, x, y, w=2.2, color=C.blue) {
     bold:true, align:"center", margin:0,
   });
 
-  footer(s, 9);
+  footer(s, 12);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1001,7 +1436,7 @@ function callout(slide, txt, x, y, w=2.2, color=C.blue) {
   });
 
   enclair(s, "En résumé : données brutes → nettoyage → analyse → résultats → affichage. Un pipeline complet, automatique et en temps réel.");
-  footer(s, 10);
+  footer(s, 13);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1084,7 +1519,7 @@ function callout(slide, txt, x, y, w=2.2, color=C.blue) {
     fontSize:9, fontFace:"Calibri", color:C.green, bold:true, margin:0, valign:"middle", align:"center",
   });
 
-  footer(s, 11);
+  footer(s, 14);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -1165,6 +1600,6 @@ function callout(slide, txt, x, y, w=2.2, color=C.blue) {
 }
 
 // ── Write ────────────────────────────────────────────────────────────────────
-pres.writeFile({fileName:"C:\\projets\\HACKATHON IT 2026\\ShieldAI_ULTRA_v2_FINAL.pptx"})
+pres.writeFile({fileName:"C:\\projets\\HACKATHON IT 2026\\ShieldAI_ULTRA_v3_ALGO.pptx"})
   .then(() => console.log("OK — ShieldAI_ULTRA_Presentation.pptx genere avec succes!"))
   .catch(e => { console.error("ERREUR:", e); process.exit(1); });

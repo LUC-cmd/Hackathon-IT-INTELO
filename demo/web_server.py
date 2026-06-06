@@ -14,6 +14,7 @@ from pydantic import BaseModel
 
 from benchmark.harness import _seed_trap_session, run_benchmark, save_report
 from benchmark.live import stream_benchmark
+from benchmark.scoring_advanced import calculate_score, save_leaderboard_entry, get_leaderboard
 from demo.export_pdf import generate_pdf_report
 from memory_mcp.tools import MemoryTools
 
@@ -53,14 +54,65 @@ class VisionBody(BaseModel):
     label: str = "Capture caméra"
 
 
+class StoreBody(BaseModel):
+    content: str
+    tags: list[str] = []
+
+
+class ForgetBody(BaseModel):
+    query: str | None = None
+    tag: str | None = "noise"
+
+
+class TranslateBody(BaseModel):
+    text: str
+    target_lang: str = "en"
+
+
+class ShareBody(BaseModel):
+    from_session: str = "live-demo"
+    to_session: str = "agent-2"
+    query: str = "contrat client premium"
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(DASHBOARD / "index.html")
 
 
+@app.get("/home")
+def home() -> FileResponse:
+    return FileResponse(DASHBOARD / "home.html")
+
+
 @app.get("/pitch")
 def pitch() -> FileResponse:
     return FileResponse(DASHBOARD / "pitch.html")
+
+
+@app.get("/presentation")
+def presentation() -> FileResponse:
+    return FileResponse(DASHBOARD / "presentation.html")
+
+
+@app.get("/premium")
+def premium() -> FileResponse:
+    return FileResponse(DASHBOARD / "premium.html")
+
+
+@app.get("/leaderboard")
+def leaderboard() -> FileResponse:
+    return FileResponse(DASHBOARD / "leaderboard.html")
+
+
+@app.get("/memory-graph")
+def memory_graph() -> FileResponse:
+    return FileResponse(DASHBOARD / "memory-graph.html")
+
+
+@app.get("/interactive")
+def interactive() -> FileResponse:
+    return FileResponse(DASHBOARD / "interactive.html")
 
 
 @app.get("/battle")
@@ -69,9 +121,15 @@ def battle() -> FileResponse:
 
 
 @app.get("/api/benchmark")
-def api_benchmark() -> dict:
-    report = run_benchmark(turn_count=50)
+def api_benchmark(turns: int = 50) -> dict:
+    report = run_benchmark(turn_count=max(10, min(turns, 100)))
     save_report(report)
+
+    # Add score and save to leaderboard
+    report["score"] = calculate_score(report)
+    leaderboard_result = save_leaderboard_entry(report)
+    report["leaderboard_rank"] = leaderboard_result["rank"]
+
     return report
 
 
@@ -183,6 +241,81 @@ def api_vision(body: VisionBody) -> dict:
 def api_search(q: str) -> dict:
     _ensure_demo_session()
     return tools.memory_search(query=q, top_k=3, session=SESSION)
+
+
+@app.post("/api/store")
+def api_store(body: StoreBody) -> dict:
+    _ensure_demo_session()
+    return tools.memory_store(
+        content=body.content,
+        tags=body.tags or ["demo"],
+        session=SESSION,
+        turn=tools.store.count(SESSION) + 1,
+    )
+
+
+@app.get("/api/summarize")
+def api_summarize() -> dict:
+    _ensure_demo_session()
+    return tools.memory_summarize(session=SESSION)
+
+
+@app.get("/api/stats")
+def api_stats() -> dict:
+    _ensure_demo_session()
+    return tools.memory_stats()
+
+
+@app.post("/api/forget")
+def api_forget(body: ForgetBody) -> dict:
+    _ensure_demo_session()
+    return tools.memory_forget(
+        session=SESSION,
+        query=body.query,
+        tag=body.tag,
+    )
+
+
+@app.post("/api/translate")
+def api_translate(body: TranslateBody) -> dict:
+    return tools.memory_translate(text=body.text, target_lang=body.target_lang)
+
+
+@app.get("/api/timeline")
+def api_timeline() -> dict:
+    _ensure_demo_session()
+    return tools.memory_timeline(session=SESSION)
+
+
+@app.post("/api/share")
+def api_share(body: ShareBody) -> dict:
+    _ensure_demo_session()
+    return tools.memory_share(
+        from_session=body.from_session,
+        to_session=body.to_session,
+        query=body.query,
+    )
+
+
+@app.post("/api/seed")
+def api_seed() -> dict:
+    """Recharge la session démo avec les faits pièges."""
+    global _seeded
+    _seeded = False
+    _ensure_demo_session()
+    entries = tools.store.list_session(SESSION)
+    return {"seeded": True, "session": SESSION, "count": len(entries)}
+
+
+@app.get("/api/leaderboard")
+def api_leaderboard() -> dict:
+    """Retourne le leaderboard avec top 20 scores."""
+    leaderboard = get_leaderboard()
+    return {
+        "entries": leaderboard,
+        "count": len(leaderboard),
+        "top_score": leaderboard[0]["score"]["total"] if leaderboard else 0,
+    }
 
 
 @app.get("/api/export/pdf")

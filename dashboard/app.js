@@ -1,73 +1,30 @@
-/* MemBridge Dashboard — palette chaude, pas de violet IA */
+/* MemBridge Dashboard — hero cinématique, innovations visibles */
 
 const PAL = {
-  rust: "#C44F28",
-  moss: "#2F5242",
-  amber: "#D4922A",
-  ink: "#1A1714",
-  clay: "#9E8E7E",
-  paper: "#F0E8DC",
+  rust: "#D04A2C",
+  moss: "#1F4D3A",
+  green: "#4ADE80",
+  amber: "#E8A317",
+  ink: "#14110F",
+  clay: "#8A7B6A",
+  paper: "#F5EDE3",
 };
 
 const I18N = {
   fr: {
-    title: "MemBridge",
-    subtitle: "Mémoire partagée · Benchmark live · Multi-modal",
-    present: "Présentation",
-    run: "Lancer benchmark",
+    run: "▶ Benchmark",
     naive: "Mode naïf",
     memory: "MemBridge",
-    tokens_cum: "tokens cumulés",
-    savings: "Économie",
-    quality: "Pièges",
-    chart_tokens: "Tokens par tour",
-    chart_savings: "Répartition coût",
-    search_live: "Recherche sémantique live",
-    search: "Chercher",
-    timeline: "Timeline mémoire",
-    timeline_hint: "■ fait · ■ géo · ■ média",
-    audio: "Audio live",
     audio_hint: "Cliquer pour dicter · reconnaissance vocale",
-    video: "Vidéo / image",
-    cam_on: "Caméra",
-    snap: "Capture → mémoire",
-    geo: "Géolocalisation",
-    geo_wait: "En attente…",
-    geo_btn: "Activer GPS",
-    store: "→ Mémoire",
-    traps: "Questions pièges — détail",
-    footer: "MemBridge · INTELO2026",
     listening: "Écoute en cours…",
     stored: "Stocké en mémoire",
     no_result: "Aucun résultat",
   },
   en: {
-    title: "MemBridge",
-    subtitle: "Shared memory · Live benchmark · Multi-modal",
-    present: "Present",
-    run: "Run benchmark",
+    run: "▶ Benchmark",
     naive: "Naive mode",
     memory: "MemBridge",
-    tokens_cum: "cumulative tokens",
-    savings: "Savings",
-    quality: "Traps",
-    chart_tokens: "Tokens per turn",
-    chart_savings: "Cost split",
-    search_live: "Live semantic search",
-    search: "Search",
-    timeline: "Memory timeline",
-    timeline_hint: "■ fact · ■ geo · ■ media",
-    audio: "Live audio",
     audio_hint: "Click to dictate · speech recognition",
-    video: "Video / image",
-    cam_on: "Camera",
-    snap: "Capture → memory",
-    geo: "Geolocation",
-    geo_wait: "Waiting…",
-    geo_btn: "Enable GPS",
-    store: "→ Memory",
-    traps: "Trap questions — detail",
-    footer: "MemBridge · INTELO2026",
     listening: "Listening…",
     stored: "Stored in memory",
     no_result: "No result",
@@ -79,23 +36,15 @@ let charts = {};
 let recognition = null;
 let listening = false;
 let mediaStream = null;
+let trapIndex = 0;
+let trapDetails = [];
 
 function t(k) { return I18N[lang][k] || k; }
 
-function applyI18n() {
-  document.querySelectorAll("[data-i18n]").forEach((el) => {
-    const k = el.dataset.i18n;
-    if (k === "audio_hint" && listening) return;
-    el.textContent = t(k);
-  });
-  document.getElementById("lang-toggle").textContent = lang === "fr" ? "EN" : "FR";
-}
-
-/* ── Son organique (pas de synth bleep) ── */
+/* ── Sons ── */
 function playVictorySound() {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
-  const notes = [220, 277, 330, 415];
-  notes.forEach((freq, i) => {
+  [220, 277, 330, 415].forEach((freq, i) => {
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.type = "triangle";
@@ -124,7 +73,7 @@ function playTick() {
 }
 
 function confetti() {
-  const colors = [PAL.rust, PAL.moss, PAL.amber, PAL.ink, PAL.paper];
+  const colors = [PAL.rust, PAL.moss, PAL.amber, PAL.green, PAL.paper];
   for (let i = 0; i < 50; i++) {
     const el = document.createElement("div");
     el.className = "confetti";
@@ -137,8 +86,8 @@ function confetti() {
   }
 }
 
-/* ── Compteur animé ── */
 function animateCounter(el, target) {
+  if (!el) return;
   const start = parseInt(el.textContent.replace(/\D/g, ""), 10) || 0;
   const dur = 900;
   const t0 = performance.now();
@@ -156,7 +105,7 @@ const chartDefaults = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
-    legend: { labels: { color: PAL.ink, font: { family: "'IBM Plex Mono'" } } },
+    legend: { labels: { color: PAL.clay, font: { family: "'IBM Plex Mono'" } } },
   },
 };
 
@@ -173,33 +122,15 @@ function renderTokenChart(data) {
     data: {
       labels: naive.map((_, i) => i + 1),
       datasets: [
-        {
-          label: t("naive"),
-          data: naive,
-          borderColor: PAL.rust,
-          backgroundColor: "rgba(196,79,40,0.08)",
-          fill: true,
-          tension: 0.35,
-          pointRadius: 0,
-          borderWidth: 2.5,
-        },
-        {
-          label: t("memory"),
-          data: memory,
-          borderColor: PAL.moss,
-          backgroundColor: "rgba(47,82,66,0.08)",
-          fill: true,
-          tension: 0.35,
-          pointRadius: 0,
-          borderWidth: 2.5,
-        },
+        { label: t("naive"), data: naive, borderColor: PAL.rust, backgroundColor: "rgba(208,74,44,0.1)", fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2.5 },
+        { label: t("memory"), data: memory, borderColor: PAL.green, backgroundColor: "rgba(74,222,128,0.08)", fill: true, tension: 0.35, pointRadius: 0, borderWidth: 2.5 },
       ],
     },
     options: {
       ...chartDefaults,
       scales: {
-        x: { ticks: { color: PAL.clay, maxTicksLimit: 10 }, grid: { color: "rgba(26,23,20,0.06)" } },
-        y: { ticks: { color: PAL.clay }, grid: { color: "rgba(26,23,20,0.06)" } },
+        x: { ticks: { color: PAL.clay, maxTicksLimit: 10 }, grid: { color: "rgba(255,255,255,0.05)" } },
+        y: { ticks: { color: PAL.clay }, grid: { color: "rgba(255,255,255,0.05)" } },
       },
     },
   });
@@ -213,62 +144,9 @@ function renderDonutChart(data) {
     type: "doughnut",
     data: {
       labels: [t("memory"), t("naive") + " évité"],
-      datasets: [{
-        data: [memory, saved],
-        backgroundColor: [PAL.moss, PAL.rust],
-        borderColor: PAL.ink,
-        borderWidth: 2,
-      }],
+      datasets: [{ data: [memory, saved], backgroundColor: [PAL.green, PAL.rust], borderColor: PAL.ink, borderWidth: 2 }],
     },
-    options: {
-      ...chartDefaults,
-      cutout: "62%",
-      plugins: { legend: { position: "bottom" } },
-    },
-  });
-}
-
-function renderCumulativeChart(data) {
-  destroyChart("cumulative");
-  const naive = data.naive?.per_turn_tokens || [];
-  const memory = data.memory?.per_turn_tokens || [];
-  const naiveCum = naive.reduce((a, v, i) => { a.push((a[i - 1] || 0) + v); return a; }, []);
-  const memCum = memory.reduce((a, v, i) => { a.push((a[i - 1] || 0) + v); return a; }, []);
-  charts.cumulative = new Chart(document.getElementById("cumulative-chart"), {
-    type: "line",
-    data: {
-      labels: naive.map((_, i) => i + 1),
-      datasets: [
-        { label: "Naïf cumulé", data: naiveCum, borderColor: PAL.rust, tension: 0.3, fill: false, pointRadius: 0 },
-        { label: "MemBridge cumulé", data: memCum, borderColor: PAL.moss, tension: 0.3, fill: false, pointRadius: 0 },
-      ],
-    },
-    options: { ...chartDefaults, scales: { x: { ticks: { color: PAL.clay } }, y: { ticks: { color: PAL.clay } } } },
-  });
-}
-
-function renderRadarChart(data) {
-  destroyChart("radar");
-  const q = data.quality?.score_pct || 0;
-  const s = Math.min(data.savings_pct || 0, 100);
-  const g = data.memory?.growth_factor ? Math.max(0, 100 - (data.memory.growth_factor - 1) * 200) : 80;
-  const c = data.memory?.compression_ratio ? Math.max(0, 100 - data.memory.compression_ratio * 200) : 80;
-  charts.radar = new Chart(document.getElementById("radar-chart"), {
-    type: "radar",
-    data: {
-      labels: ["Économie", "Qualité", "Stabilité", "Compression"],
-      datasets: [{
-        label: "MemBridge",
-        data: [s, q, g, c],
-        backgroundColor: "rgba(47,82,66,0.2)",
-        borderColor: PAL.moss,
-        borderWidth: 2,
-      }],
-    },
-    options: {
-      ...chartDefaults,
-      scales: { r: { min: 0, max: 100, ticks: { color: PAL.clay }, grid: { color: "rgba(26,23,20,0.1)" } } },
-    },
+    options: { ...chartDefaults, cutout: "62%", plugins: { legend: { position: "bottom" } } },
   });
 }
 
@@ -285,7 +163,7 @@ function renderCumulativeChart(data) {
       labels: nCum.map((_, i) => i + 1),
       datasets: [
         { label: "Naïf cumulé", data: nCum, borderColor: PAL.rust, tension: 0.3, fill: false, pointRadius: 0 },
-        { label: "MemBridge cumulé", data: mCum, borderColor: PAL.moss, tension: 0.3, fill: false, pointRadius: 0 },
+        { label: "MemBridge cumulé", data: mCum, borderColor: PAL.green, tension: 0.3, fill: false, pointRadius: 0 },
       ],
     },
     options: { ...chartDefaults, scales: { x: { ticks: { color: PAL.clay } }, y: { ticks: { color: PAL.clay } } } },
@@ -296,23 +174,17 @@ function renderRadarChart(data) {
   destroyChart("radar");
   const q = data.quality?.score_pct || 0;
   const s = Math.min(data.savings_pct || 0, 100);
-  const g = data.memory?.growth_factor ? Math.max(0, 100 - data.memory.growth_factor * 30) : 80;
+  const g = data.memory?.growth_factor ? Math.max(0, 100 - (data.memory.growth_factor - 1) * 200) : 80;
   const c = data.memory?.compression_ratio ? Math.max(0, 100 - data.memory.compression_ratio * 200) : 75;
   charts.radar = new Chart(document.getElementById("radar-chart"), {
     type: "radar",
     data: {
       labels: ["Économie", "Qualité", "Stabilité", "Compression"],
-      datasets: [{
-        label: "MemBridge",
-        data: [s, q, g, c],
-        backgroundColor: "rgba(47,82,66,0.2)",
-        borderColor: PAL.moss,
-        borderWidth: 2,
-      }],
+      datasets: [{ label: "MemBridge", data: [s, q, g, c], backgroundColor: "rgba(74,222,128,0.15)", borderColor: PAL.green, borderWidth: 2 }],
     },
     options: {
       ...chartDefaults,
-      scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: "rgba(26,23,20,0.1)" } } },
+      scales: { r: { min: 0, max: 100, ticks: { display: false }, grid: { color: "rgba(255,255,255,0.08)" }, pointLabels: { color: PAL.clay } } },
     },
   });
 }
@@ -324,20 +196,14 @@ function renderTrapChart(quality) {
     type: "bar",
     data: {
       labels: details.map((d, i) => `#${i + 1}`),
-      datasets: [{
-        label: "Score",
-        data: details.map((d) => d.score || 0),
-        backgroundColor: details.map((d) => d.passed ? PAL.moss : PAL.rust),
-        borderColor: PAL.ink,
-        borderWidth: 1,
-      }],
+      datasets: [{ label: "Score", data: details.map((d) => d.score || 0), backgroundColor: details.map((d) => d.passed ? PAL.green : PAL.rust), borderWidth: 0 }],
     },
     options: {
       ...chartDefaults,
       plugins: { legend: { display: false } },
       scales: {
         x: { ticks: { color: PAL.clay }, grid: { display: false } },
-        y: { min: 0, max: 1, ticks: { color: PAL.clay }, grid: { color: "rgba(26,23,20,0.06)" } },
+        y: { min: 0, max: 1, ticks: { color: PAL.clay }, grid: { color: "rgba(255,255,255,0.05)" } },
       },
     },
   });
@@ -348,27 +214,25 @@ function renderBattleBar(data) {
   const memory = data.memory?.total_tokens || 1;
   const total = naive + memory;
   const naivePct = Math.round((naive / total) * 100);
-  const memPct = 100 - naivePct;
   document.getElementById("battle-naive").style.width = naivePct + "%";
-  document.getElementById("battle-memory").style.width = memPct + "%";
+  document.getElementById("battle-memory").style.width = (100 - naivePct) + "%";
 }
 
 function renderTraps(quality) {
   const list = document.getElementById("trap-list");
+  if (!list) return;
   list.innerHTML = "";
   (quality?.details || []).forEach((item) => {
     const div = document.createElement("div");
     div.className = `trap-item ${item.passed ? "ok" : "ko"}`;
-    div.innerHTML = `
-      <span>${item.query}</span>
-      <span class="trap-score">${(item.score || 0).toFixed(3)}</span>
-      <span>${item.passed ? "✓" : "✗"} ${item.expected}</span>`;
+    div.innerHTML = `<span>${item.query}</span><span class="trap-score">${(item.score || 0).toFixed(3)}</span><span>${item.passed ? "✓" : "✗"} ${item.expected}</span>`;
     list.appendChild(div);
   });
 }
 
 function renderTimeline(entries) {
   const el = document.getElementById("memory-timeline");
+  if (!el) return;
   el.innerHTML = "";
   (entries || []).forEach((e) => {
     const dot = document.createElement("div");
@@ -376,7 +240,7 @@ function renderTimeline(entries) {
     dot.title = e.content?.slice(0, 60) || "";
     if (e.tags?.includes("fact")) dot.classList.add("fact");
     else if (e.tags?.includes("geo")) dot.classList.add("geo");
-    else if (e.tags?.some((t) => ["audio", "video", "call", "transcript"].includes(t)))
+    else if (e.tags?.some((tg) => ["audio", "video", "call", "transcript", "vision"].includes(tg)))
       dot.classList.add("media");
     el.appendChild(dot);
   });
@@ -384,6 +248,7 @@ function renderTimeline(entries) {
 
 function renderInsights(insights) {
   const panel = document.getElementById("insights-panel");
+  if (!panel) return;
   if (!insights?.insights?.length) { panel.hidden = true; return; }
   panel.hidden = false;
   document.getElementById("insights-summary").textContent = insights.summary || "";
@@ -397,15 +262,309 @@ function renderInsights(insights) {
   });
 }
 
+function updateHeroStats(data) {
+  const savings = document.getElementById("hero-savings");
+  const traps = document.getElementById("hero-traps");
+  if (savings) savings.textContent = `${Math.round(data.savings_pct)}%`;
+  if (traps) traps.textContent = `${data.quality.passed}/${data.quality.total}`;
+}
+
+/* ── Comparaison slider ── */
+const NAIVE_SAMPLE = `Tour 1: Bonjour, je suis Marie Dupont, cliente premium chez TechCorp.
+Tour 2: assistant: Bienvenue Marie, comment puis-je vous aider ?
+Tour 3: Mon numéro de contrat est CTR-2024-8847.
+Tour 4: assistant: Contrat noté CTR-2024-8847.
+Tour 5: La facture de mars devrait être 99,90 € mais affiche 149,90 €.
+… + 45 tours de bruit sémantique (météo, recettes, sport, cinéma)
+Tour 50: assistant: hors-sujet tour 24 — blockbuster mars — bruit 408
+
+→ Contexte envoyé au LLM : ~22 381 tokens (historique complet)`;
+
+const MEMORY_SAMPLE = `[RÉSUMÉ STRUCTURÉ — 42 tokens]
+CLIENT=Marie Dupont | CTR=CTR-2024-8847 | MAIL=marie.dupont@email.fr
+EUR=149,90 (écart +50€) | DATE=12 février (bug iOS)
+
+[RECHERCHE SÉMANTIQUE — top 3 résultats]
+① score 0.76 — "identité interlocutrice premium" → Marie Dupont
+② score 0.74 — "référence légale dossier" → CTR-2024-8847
+③ score 0.59 — "coordonnées électroniques" → marie.dupont@email.fr
+
+→ Contexte envoyé au LLM : ~4 580 tokens (résumé + recherche ciblée)
+→ Économie : 79.5% · Qualité pièges : 10/10`;
+
+function initCompareSlider() {
+  const wrap = document.getElementById("compare-wrap");
+  const handle = document.getElementById("compare-handle");
+  const layer = document.getElementById("compare-memory-layer");
+  const naiveEl = document.getElementById("compare-naive-text");
+  const memEl = document.getElementById("compare-memory-text");
+  if (!wrap || !handle || !layer) return;
+
+  naiveEl.textContent = NAIVE_SAMPLE;
+  memEl.textContent = MEMORY_SAMPLE;
+
+  let dragging = false;
+  const setPos = (pct) => {
+    const p = Math.max(5, Math.min(95, pct));
+    handle.style.left = p + "%";
+    layer.style.clipPath = `inset(0 ${100 - p}% 0 0)`;
+  };
+
+  const onMove = (clientX) => {
+    const rect = wrap.getBoundingClientRect();
+    setPos(((clientX - rect.left) / rect.width) * 100);
+  };
+
+  handle.addEventListener("mousedown", () => { dragging = true; });
+  window.addEventListener("mouseup", () => { dragging = false; });
+  window.addEventListener("mousemove", (e) => { if (dragging) onMove(e.clientX); });
+  wrap.addEventListener("click", (e) => onMove(e.clientX));
+  handle.addEventListener("touchstart", (e) => { dragging = true; e.preventDefault(); });
+  window.addEventListener("touchend", () => { dragging = false; });
+  window.addEventListener("touchmove", (e) => { if (dragging) onMove(e.touches[0].clientX); });
+  setPos(50);
+}
+
+/* ── Piège carousel ── */
+function buildTrapCarousel(quality) {
+  trapDetails = quality?.details || [];
+  const carousel = document.getElementById("trap-carousel");
+  if (!carousel || !trapDetails.length) return;
+
+  carousel.innerHTML = "";
+  trapDetails.forEach((item, i) => {
+    const slide = document.createElement("div");
+    slide.className = `trap-slide${i === 0 ? " active" : ""}`;
+    slide.id = `trap-slide-${i}`;
+    slide.innerHTML = `
+      <div class="trap-q">❓ ${item.query}</div>
+      <div class="trap-a" id="trap-answer-${i}">Réponse attendue : <strong>${item.expected}</strong></div>
+      <span class="trap-score-badge">${item.passed ? "✓ RÉUSSI" : "✗ ÉCHOUÉ"} — score ${(item.score || 0).toFixed(3)}</span>`;
+    carousel.appendChild(slide);
+  });
+  trapIndex = 0;
+}
+
+function showTrapSlide(idx) {
+  if (!trapDetails.length) return;
+  trapIndex = (idx + trapDetails.length) % trapDetails.length;
+  document.querySelectorAll(".trap-slide").forEach((s, i) => {
+    s.classList.toggle("active", i === trapIndex);
+  });
+  playTick();
+}
+
+async function testCurrentTrap() {
+  const item = trapDetails[trapIndex];
+  if (!item) return;
+  const answerEl = document.getElementById(`trap-answer-${trapIndex}`);
+  answerEl.innerHTML = "Recherche en cours…";
+  playTick();
+  const res = await api(`/api/search?q=${encodeURIComponent(item.query)}`);
+  if (res.results?.length) {
+    const top = res.results[0];
+    const ok = top.content?.toLowerCase().includes(item.expected.toLowerCase());
+    answerEl.innerHTML = `
+      Résultat : <strong>${top.content?.slice(0, 120)}</strong><br>
+      <span class="trap-score-badge" style="background:${ok ? PAL.moss : PAL.rust}">${ok ? "✓ TROUVÉ" : "✗ MANQUÉ"} — score ${top.score?.toFixed(3)}</span>`;
+    if (ok) playVictorySound();
+  } else {
+    answerEl.innerHTML = `<span style="color:${PAL.rust}">Aucun résultat</span>`;
+  }
+}
+
+/* ── Console MCP — vrais appels API ── */
+const DEMO_LAT = 6.1319;
+const DEMO_LON = 1.2228;
+const TOUR_TOOLS = ["seed", "search", "store", "summarize", "translate", "timeline", "stats", "transcribe", "locate", "vision", "share"];
+
+function sleep(ms) { return new Promise((r) => setTimeout(r, ms)); }
+
+function showConsole(text, isError = false) {
+  const out = document.getElementById("console-output");
+  const status = document.getElementById("console-status");
+  if (out) {
+    out.textContent = text;
+    out.classList.toggle("error", isError);
+  }
+  if (status) status.textContent = isError ? "❌ Erreur" : "📡 Réponse MCP reçue";
+}
+
+function highlightTool(tool, state = "running") {
+  document.querySelectorAll(".tool-btn, .innov-card").forEach((el) => {
+    if (el.dataset.tool !== tool) {
+      el.classList.remove("running", "done", "active");
+      return;
+    }
+    el.classList.remove("running", "done", "active");
+    if (state === "running") el.classList.add("running");
+    if (state === "done") el.classList.add("done");
+    if (state === "active") el.classList.add("active");
+  });
+}
+
+async function refreshMemory() {
+  try {
+    const mem = await api("/api/memory");
+    renderTimeline(mem.entries);
+    window.BrainViz?.setFromMemory(mem.entries);
+    const naiveEl = document.getElementById("compare-memory-text");
+    if (naiveEl && mem.summary?.summary) {
+      naiveEl.textContent = `[RÉSUMÉ LIVE — ${mem.summary.compressed_chars} chars]\n${mem.summary.summary}\n\n[${mem.count} entrées en mémoire]`;
+    }
+    return mem;
+  } catch { return null; }
+}
+
+const TOOL_ACTIONS = {
+  seed: () => api("/api/seed", { method: "POST" }),
+  search: () => api("/api/search?q=" + encodeURIComponent("identité de l'interlocutrice premium")),
+  store: () => api("/api/store", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content: "Démo jury : nouveau fait — équipe INTELO2026 Lomé", tags: ["fact", "demo"] }),
+  }),
+  summarize: () => api("/api/summarize"),
+  stats: () => api("/api/stats"),
+  transcribe: () => {
+    const text = document.getElementById("transcript")?.value?.trim()
+      || "Marie Dupont confirme le contrat CTR-2024-8847 par téléphone.";
+    return api("/api/transcribe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transcript: text, source: "audio", language: "fr" }),
+    });
+  },
+  vision: () => api("/api/vision", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ label: "Capture démo jury INTELO2026", image_b64: "demo" }),
+  }),
+  locate: () => api("/api/locate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ latitude: DEMO_LAT, longitude: DEMO_LON, label: "Hackathon Lomé" }),
+  }),
+  translate: () => api("/api/translate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text: "cliente premium — contrat et facture", target_lang: "en" }),
+  }),
+  timeline: () => api("/api/timeline"),
+  share: () => api("/api/share", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ from_session: "live-demo", to_session: "agent-2", query: "contrat client premium" }),
+  }),
+  forget: () => api("/api/forget", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tag: "noise" }),
+  }),
+};
+
+async function runMcpTool(tool) {
+  const fn = TOOL_ACTIONS[tool];
+  if (!fn) return;
+  highlightTool(tool, "running");
+  showConsole(`▶ ${tool} en cours…\nGET/POST /api/${tool === "seed" ? "seed" : tool}`);
+  playTick();
+  try {
+    const result = await fn();
+    showConsole(`✅ ${tool} — succès\n\n${JSON.stringify(result, null, 2)}`);
+    highlightTool(tool, "done");
+    await refreshMemory();
+    if (tool === "search" && result.results?.[0]) {
+      const box = document.getElementById("search-result");
+      if (box) {
+        box.innerHTML = `<strong>Score ${result.results[0].score?.toFixed(3)}</strong> — ${result.results[0].content}`;
+        box.classList.add("visible");
+      }
+    }
+    if (tool === "locate") {
+      document.getElementById("geo-status").textContent = `${DEMO_LAT}, ${DEMO_LON} (Lomé)`;
+      document.getElementById("map-preview").style.backgroundImage =
+        `url(https://staticmap.openstreetmap.de/staticmap.php?center=${DEMO_LAT},${DEMO_LON}&zoom=13&size=400x140&markers=${DEMO_LAT},${DEMO_LON},red)`;
+    }
+    if (tool === "translate" && result.translated) playVictorySound();
+    return result;
+  } catch (e) {
+    showConsole(`❌ ${tool} — ${e.message}`, true);
+    highlightTool(tool, "active");
+    throw e;
+  }
+}
+
+async function runDemoTour() {
+  const btn = document.getElementById("btn-demo-tour");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ Tour en cours…"; }
+  showConsole("🚀 Tour démo — 11 outils MCP en séquence…");
+  for (const tool of TOUR_TOOLS) {
+    try { await runMcpTool(tool); } catch { /* continue */ }
+    await sleep(700);
+  }
+  showConsole("✅ Tour démo terminé — 11 outils MCP testés avec succès");
+  confetti();
+  playVictorySound();
+  if (btn) { btn.disabled = false; btn.textContent = "▶ Tour démo auto (11 outils)"; }
+}
+
+async function runAllTraps() {
+  const btn = document.getElementById("btn-all-traps");
+  if (btn) { btn.disabled = true; btn.textContent = "⏳ Pièges…"; }
+  let passed = 0;
+  const lines = ["🎯 Test des 10 questions pièges :\n"];
+  for (let i = 0; i < trapDetails.length; i++) {
+    const item = trapDetails[i];
+    const res = await api(`/api/search?q=${encodeURIComponent(item.query)}`);
+    const top = res.results?.[0];
+    const ok = top?.content?.toLowerCase().includes(item.expected.toLowerCase());
+    if (ok) passed++;
+    lines.push(`${ok ? "✓" : "✗"} #${i + 1} "${item.query}" → ${item.expected} (score ${top?.score?.toFixed(3) || "—"})`);
+    showTrapSlide(i);
+    const answerEl = document.getElementById(`trap-answer-${i}`);
+    if (answerEl && top) {
+      answerEl.innerHTML = `Résultat : <strong>${top.content?.slice(0, 100)}</strong>`;
+    }
+    await sleep(400);
+  }
+  lines.push(`\n🏆 Résultat : ${passed}/${trapDetails.length} pièges réussis`);
+  showConsole(lines.join("\n"));
+  if (passed === trapDetails.length) { confetti(); playVictorySound(); }
+  if (btn) { btn.disabled = false; btn.textContent = "🎯 Tester les 10 pièges"; }
+}
+
+function initInnovCards() {
+  document.querySelectorAll("[data-tool]").forEach((el) => {
+    const tool = el.dataset.tool;
+    const handler = (e) => {
+      e.stopPropagation();
+      document.getElementById("console")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      runMcpTool(tool);
+    };
+    if (el.classList.contains("tool-btn")) {
+      el.addEventListener("click", handler);
+    } else if (el.classList.contains("innov-card")) {
+      el.querySelector(".innov-run")?.addEventListener("click", handler);
+    }
+  });
+  document.getElementById("btn-demo-tour")?.addEventListener("click", runDemoTour);
+  document.getElementById("btn-seed")?.addEventListener("click", () => runMcpTool("seed"));
+  document.getElementById("btn-all-traps")?.addEventListener("click", runAllTraps);
+  document.getElementById("console-clear")?.addEventListener("click", () => {
+    showConsole("// Console effacée — cliquez un outil MCP");
+    document.querySelectorAll(".tool-btn, .innov-card").forEach((el) => el.classList.remove("running", "done", "active"));
+  });
+}
+
 function renderReport(data) {
   animateCounter(document.getElementById("naive-tokens"), data.naive.total_tokens);
   animateCounter(document.getElementById("memory-tokens"), data.memory.total_tokens);
   document.getElementById("savings").textContent = `-${data.savings_pct}%`;
-  document.getElementById("euros-saved").textContent =
-    `${(data.tokens_saved || 0).toLocaleString()} tokens économisés`;
-  document.getElementById("quality-score").textContent =
-    `${data.quality.passed}/${data.quality.total}`;
+  document.getElementById("euros-saved").textContent = `${(data.tokens_saved || 0).toLocaleString()} tokens économisés`;
+  document.getElementById("quality-score").textContent = `${data.quality.passed}/${data.quality.total}`;
   document.getElementById("quality-bar").style.width = `${data.quality.score_pct}%`;
+  updateHeroStats(data);
   renderTokenChart(data);
   renderDonutChart(data);
   renderCumulativeChart(data);
@@ -414,6 +573,7 @@ function renderReport(data) {
   renderBattleBar(data);
   renderTraps(data.quality);
   renderInsights(data.insights);
+  buildTrapCarousel(data.quality);
   window.__lastReport = data;
   if (data.savings_pct >= 70) { confetti(); playVictorySound(); }
 }
@@ -428,14 +588,9 @@ async function loadReport() {
   try {
     const data = await api("/api/report");
     renderReport(data);
-    const mem = await api("/api/memory");
-    renderTimeline(mem.entries);
-  } catch {
-    try {
-      const data = await api("/api/report");
-      renderReport(data);
-    } catch { /* offline */ }
-  }
+    await refreshMemory();
+    await api("/api/seed", { method: "POST" });
+  } catch { /* offline — données statiques */ }
 }
 
 async function runBenchmark() {
@@ -447,13 +602,14 @@ async function runBenchmark() {
     renderReport(await api("/api/benchmark"));
     const mem = await api("/api/memory");
     renderTimeline(mem.entries);
+    window.BrainViz?.setFromMemory(mem.entries);
   } finally {
     btn.disabled = false;
     btn.textContent = t("run");
   }
 }
 
-/* ── Recherche live ── */
+/* ── Recherche ── */
 document.getElementById("search-btn").onclick = async () => {
   const q = document.getElementById("search-query").value.trim();
   if (!q) return;
@@ -462,7 +618,7 @@ document.getElementById("search-btn").onclick = async () => {
   const box = document.getElementById("search-result");
   if (res.results?.length) {
     const top = res.results[0];
-    box.innerHTML = `<strong>Score ${top.score}</strong> — ${top.content}`;
+    box.innerHTML = `<strong>Score ${top.score?.toFixed(3)}</strong> — ${top.content}`;
     box.classList.add("visible");
   } else {
     box.textContent = t("no_result");
@@ -470,7 +626,7 @@ document.getElementById("search-btn").onclick = async () => {
   }
 };
 
-/* ── Audio / Speech ── */
+/* ── Audio ── */
 function initSpeech() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (!SR) return;
@@ -478,7 +634,6 @@ function initSpeech() {
   recognition.lang = lang === "fr" ? "fr-FR" : "en-US";
   recognition.continuous = false;
   recognition.interimResults = true;
-
   recognition.onresult = (ev) => {
     const text = Array.from(ev.results).map((r) => r[0].transcript).join("");
     document.getElementById("transcript").value = text;
@@ -486,13 +641,14 @@ function initSpeech() {
   recognition.onend = () => {
     listening = false;
     window.AudioViz?.stop();
-    document.getElementById("audio-zone").classList.remove("recording");
-    document.getElementById("audio-zone").textContent = t("audio_hint");
+    const zone = document.getElementById("audio-zone");
+    zone.classList.remove("recording");
+    zone.textContent = t("audio_hint");
   };
 }
 
 document.getElementById("audio-zone").onclick = () => {
-  if (!recognition) { initSpeech(); }
+  if (!recognition) initSpeech();
   if (!recognition) {
     document.getElementById("audio-status").textContent = "Speech API non supportée";
     return;
@@ -500,51 +656,12 @@ document.getElementById("audio-zone").onclick = () => {
   if (listening) { recognition.stop(); return; }
   listening = true;
   recognition.lang = lang === "fr" ? "fr-FR" : "en-US";
-  document.getElementById("audio-zone").classList.add("recording");
-  document.getElementById("audio-zone").innerHTML =
-    `<span class="rec-indicator"></span>${t("listening")}`;
+  const zone = document.getElementById("audio-zone");
+  zone.classList.add("recording");
+  zone.innerHTML = `<span class="rec-indicator"></span>${t("listening")}`;
   window.AudioViz?.start();
   recognition.start();
 };
-
-document.getElementById("export-pdf")?.addEventListener("click", () => {
-  window.open("/api/export/pdf", "_blank");
-});
-
-document.getElementById("export-json")?.addEventListener("click", () => {
-  if (!window.__lastReport) return;
-  const blob = new Blob([JSON.stringify(window.__lastReport, null, 2)], { type: "application/json" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "membridge-report.json";
-  a.click();
-});
-
-// Export PDF (add button if it doesn't exist)
-const pdfBtn = document.createElement("button");
-pdfBtn.id = "export-pdf";
-pdfBtn.className = "btn ghost";
-pdfBtn.textContent = "📄 PDF";
-pdfBtn.addEventListener("click", async () => {
-  try {
-    const res = await fetch("/api/export/pdf");
-    if (res.ok) {
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "MemBridge-Report.pdf";
-      a.click();
-      URL.revokeObjectURL(url);
-    }
-  } catch (e) {
-    console.error("PDF export failed:", e);
-  }
-});
-const controls = document.querySelector(".controls");
-if (controls && !document.getElementById("export-pdf")) {
-  controls.insertBefore(pdfBtn, controls.lastChild);
-}
 
 document.getElementById("store-transcript").onclick = async () => {
   const text = document.getElementById("transcript").value.trim();
@@ -558,6 +675,7 @@ document.getElementById("store-transcript").onclick = async () => {
   playTick();
   const mem = await api("/api/memory");
   renderTimeline(mem.entries);
+  window.BrainViz?.setFromMemory(mem.entries);
 };
 
 /* ── Caméra ── */
@@ -566,7 +684,7 @@ document.getElementById("cam-btn").onclick = async () => {
     mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     document.getElementById("video-preview").srcObject = mediaStream;
     document.getElementById("video-status").textContent = "Caméra active";
-  } catch (e) {
+  } catch {
     document.getElementById("video-status").textContent = "Caméra refusée";
   }
 };
@@ -596,8 +714,7 @@ document.getElementById("geo-btn").onclick = () => {
   if (!navigator.geolocation) return;
   navigator.geolocation.getCurrentPosition(async (pos) => {
     const { latitude, longitude } = pos.coords;
-    document.getElementById("geo-status").textContent =
-      `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    document.getElementById("geo-status").textContent = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
     document.getElementById("map-preview").style.backgroundImage =
       `url(https://staticmap.openstreetmap.de/staticmap.php?center=${latitude},${longitude}&zoom=13&size=400x140&markers=${latitude},${longitude},red)`;
     await api("/api/locate", {
@@ -607,13 +724,28 @@ document.getElementById("geo-btn").onclick = () => {
     });
     const mem = await api("/api/memory");
     renderTimeline(mem.entries);
+    window.BrainViz?.setFromMemory(mem.entries);
   });
 };
+
+/* ── Export ── */
+document.getElementById("export-pdf")?.addEventListener("click", () => {
+  window.open("/api/export/pdf", "_blank");
+});
+
+document.getElementById("export-json")?.addEventListener("click", () => {
+  if (!window.__lastReport) return;
+  const blob = new Blob([JSON.stringify(window.__lastReport, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "membridge-report.json";
+  a.click();
+});
 
 /* ── UI ── */
 document.getElementById("lang-toggle").onclick = () => {
   lang = lang === "fr" ? "en" : "fr";
-  applyI18n();
+  document.getElementById("lang-toggle").textContent = lang === "fr" ? "EN" : "FR";
 };
 
 document.getElementById("present-mode").onclick = () => {
@@ -621,7 +753,13 @@ document.getElementById("present-mode").onclick = () => {
 };
 
 document.getElementById("run-benchmark").onclick = runBenchmark;
+document.getElementById("trap-prev")?.addEventListener("click", () => showTrapSlide(trapIndex - 1));
+document.getElementById("trap-next")?.addEventListener("click", () => showTrapSlide(trapIndex + 1));
+document.getElementById("trap-test")?.addEventListener("click", testCurrentTrap);
 
+/* ── Init ── */
+window.BrainViz?.init("brain-canvas");
+initCompareSlider();
+initInnovCards();
 initSpeech();
-applyI18n();
 loadReport();

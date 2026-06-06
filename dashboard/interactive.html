@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemBridge — Interactive Control Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        * { font-family: 'Poppins', sans-serif; }
+
+        body { background: linear-gradient(135deg, #0f172a 0%, #1a2a4a 50%, #0f1729 100%); }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-action {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-primary-action {
+            background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+            color: white;
+        }
+
+        .btn-primary-action:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-secondary-action {
+            background: rgba(99, 102, 241, 0.1);
+            color: #818cf8;
+            border: 2px solid #6366f1;
+        }
+
+        .btn-secondary-action:hover {
+            background: rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-danger-action {
+            background: rgba(239, 68, 68, 0.1);
+            color: #fca5a5;
+            border: 2px solid #ef4444;
+        }
+
+        .btn-danger-action:hover {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .panel {
+            background: rgba(20, 30, 48, 0.8);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, #6366f1, #818cf8);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #818cf8;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #818cf8;
+            cursor: pointer;
+            border: none;
+        }
+
+        .stat-display {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            border-left: 4px solid #6366f1;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(99, 102, 241, 0.3);
+            border-radius: 50%;
+            border-top-color: #6366f1;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e293b;
+            padding: 2rem;
+            border-radius: 12px;
+            max-width: 600px;
+            border: 1px solid rgba(99, 102, 241, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-50">
+    <div class="min-h-screen p-6">
+        <!-- HEADER -->
+        <div class="glass rounded-2xl p-8 mb-6">
+            <h1 class="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent mb-2">
+                🎮 Interactive Control Panel
+            </h1>
+            <p class="text-slate-300">Advanced benchmark controls & innovations</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- LEFT: CONTROLS -->
+            <div class="lg:col-span-2">
+                <!-- QUICK ACTIONS -->
+                <div class="panel">
+                    <h2 class="text-2xl font-bold mb-6">⚡ Quick Actions</h2>
+
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <button class="btn-action btn-primary-action" onclick="quickBenchmark()">
+                            🚀 Quick Benchmark (30 sec)
+                        </button>
+                        <button class="btn-action btn-primary-action" onclick="fullBenchmark()">
+                            🔥 Full Benchmark (50 turns)
+                        </button>
+                        <button class="btn-action btn-secondary-action" onclick="compareBenchmarks()">
+                            🔄 Compare Runs
+                        </button>
+                        <button class="btn-action btn-secondary-action" onclick="analyzeMemory()">
+                            🧠 Analyze Memory
+                        </button>
+                    </div>
+
+                    <div id="action-status" class="stat-display" style="display: none;">
+                        <div class="flex items-center gap-2">
+                            <div class="loading"></div>
+                            <span id="status-text">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ADVANCED BENCHMARK PARAMS -->
+                <div class="panel">
+                    <h2 class="text-2xl font-bold mb-4">⚙️ Benchmark Parameters</h2>
+
+                    <div>
+                        <label class="block text-slate-300 font-semibold mb-2">Number of Turns</label>
+                        <div class="slider-container">
+                            <input type="range" id="turns-slider" min="10" max="100" value="50" step="5">
+                            <span id="turns-value" class="text-indigo-400 font-bold w-16 text-right">50</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 1.5rem;">
+                        <label class="block text-slate-300 font-semibold mb-2">Compression Target (%)</label>
+                        <div class="slider-container">
+                            <input type="range" id="compression-slider" min="50" max="90" value="70" step="5">
+                            <span id="compression-value" class="text-green-400 font-bold w-16 text-right">70%</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-action btn-primary-action w-full mt-6" onclick="customBenchmark()">
+                        ✨ Run Custom Benchmark
+                    </button>
+                </div>
+
+                <!-- ADVANCED OPTIONS -->
+                <div class="panel">
+                    <h2 class="text-2xl font-bold mb-4">🔧 Advanced Options</h2>
+
+                    <button class="btn-action btn-secondary-action w-full mb-3" onclick="exportDetailedReport()">
+                        📊 Export Detailed Report
+                    </button>
+                    <button class="btn-action btn-secondary-action w-full mb-3" onclick="generateComparison()">
+                        📈 Generate Comparison Chart
+                    </button>
+                    <button class="btn-action btn-secondary-action w-full mb-3" onclick="simulateDifferentModels()">
+                        🤖 Simulate Different Models
+                    </button>
+                    <button class="btn-action btn-secondary-action w-full" onclick="runOptimization()">
+                        🎯 Run Optimization
+                    </button>
+                </div>
+
+                <!-- INNOVATION FEATURES -->
+                <div class="panel">
+                    <h2 class="text-2xl font-bold mb-4">💡 Innovations</h2>
+
+                    <button class="btn-action btn-secondary-action w-full mb-3" onclick="liveMonitoring()">
+                        📡 Live Performance Monitor
+                    </button>
+                    <button class="btn-action btn-secondary-action w-full mb-3" onclick="predictPerformance()">
+                        🔮 Predict Performance
+                    </button>
+                    <button class="btn-action btn-secondary-action w-full mb-3" onclick="abTesting()">
+                        ⚔️ A/B Testing Mode
+                    </button>
+                    <button class="btn-action btn-secondary-action w-full" onclick="smartRecommendations()">
+                        💎 Get Smart Recommendations
+                    </button>
+                </div>
+            </div>
+
+            <!-- RIGHT: STATS & RESULTS -->
+            <div>
+                <div class="panel">
+                    <h2 class="text-xl font-bold mb-4">📊 Current Results</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="text-slate-400 text-sm">Naive Tokens</div>
+                            <div class="text-2xl font-bold text-red-400" id="result-naive">—</div>
+                        </div>
+                        <div>
+                            <div class="text-slate-400 text-sm">Memory Tokens</div>
+                            <div class="text-2xl font-bold text-green-400" id="result-memory">—</div>
+                        </div>
+                        <div>
+                            <div class="text-slate-400 text-sm">Savings</div>
+                            <div class="text-2xl font-bold text-cyan-400" id="result-savings">—</div>
+                        </div>
+                        <div>
+                            <div class="text-slate-400 text-sm">Quality Score</div>
+                            <div class="text-2xl font-bold text-indigo-400" id="result-quality">—</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h2 class="text-xl font-bold mb-4">🎯 Your Score</h2>
+                    <div class="text-4xl font-bold bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent text-center mb-2" id="score-display">
+                        —
+                    </div>
+                    <div class="text-center text-slate-400" id="grade-display">No benchmark yet</div>
+                </div>
+
+                <div class="panel">
+                    <h2 class="text-xl font-bold mb-4">🏅 Leaderboard Rank</h2>
+                    <div class="text-4xl font-bold text-center text-amber-400" id="rank-display">
+                        —
+                    </div>
+                    <div class="text-center text-slate-400" id="rank-info">Run a benchmark to see ranking</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL for results -->
+        <div id="resultModal" class="modal">
+            <div class="modal-content">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-2xl font-bold" id="modalTitle">Results</h2>
+                    <button onclick="closeModal()" class="text-2xl text-slate-400 hover:text-white">&times;</button>
+                </div>
+                <div id="modalContent" class="text-slate-300 space-y-4">
+                    <!-- Content will be inserted here -->
+                </div>
+                <button onclick="closeModal()" class="btn-action btn-secondary-action w-full mt-6">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update sliders
+        document.getElementById('turns-slider').addEventListener('input', (e) => {
+            document.getElementById('turns-value').textContent = e.target.value;
+        });
+
+        document.getElementById('compression-slider').addEventListener('input', (e) => {
+            document.getElementById('compression-value').textContent = e.target.value + '%';
+        });
+
+        function showStatus(text) {
+            document.getElementById('action-status').style.display = 'block';
+            document.getElementById('status-text').textContent = text;
+        }
+
+        function hideStatus() {
+            document.getElementById('action-status').style.display = 'none';
+        }
+
+        async function quickBenchmark() {
+            showStatus('Running 30-turn benchmark...');
+            const res = await fetch('/api/benchmark?turns=30');
+            const data = await res.json();
+            updateResults(data);
+            hideStatus();
+            showModal('Quick Benchmark Complete', `Savings: ${data.savings_pct}% | Quality: ${data.quality.passed}/${data.quality.total}`);
+        }
+
+        async function fullBenchmark() {
+            showStatus('Running 50-turn benchmark...');
+            const res = await fetch('/api/benchmark');
+            const data = await res.json();
+            updateResults(data);
+            hideStatus();
+            showModal('Full Benchmark Complete', `Savings: ${data.savings_pct}% | Quality: ${data.quality.passed}/${data.quality.total} | Score: ${data.score?.total || '—'}`);
+        }
+
+        async function customBenchmark() {
+            const turns = document.getElementById('turns-slider').value;
+            showStatus(`Running ${turns}-turn custom benchmark...`);
+            const res = await fetch(`/api/benchmark?turns=${turns}`);
+            const data = await res.json();
+            updateResults(data);
+            hideStatus();
+            showModal('Custom Benchmark Complete', `Turns: ${turns} | Savings: ${data.savings_pct}%`);
+        }
+
+        function compareBenchmarks() {
+            showModal('Compare Benchmarks', 'Feature coming soon: Compare your last 5 runs side-by-side with detailed metrics');
+        }
+
+        function analyzeMemory() {
+            showModal('Analyze Memory', 'Feature coming soon: Deep analysis of memory storage efficiency and retrieval performance');
+        }
+
+        function exportDetailedReport() {
+            showModal('Export Report', 'Feature coming soon: Generate comprehensive PDF with benchmarks, metrics, and recommendations');
+        }
+
+        function generateComparison() {
+            showModal('Generate Comparison', 'Feature coming soon: Visual comparison between Naive vs MemBridge with detailed breakdown');
+        }
+
+        function simulateDifferentModels() {
+            showModal('Simulate Models', 'Feature coming soon: Test how different AI models would perform with MemBridge');
+        }
+
+        function runOptimization() {
+            showModal('Run Optimization', 'Feature coming soon: AI-powered suggestions to further optimize your memory compression');
+        }
+
+        function liveMonitoring() {
+            showModal('Live Monitor', 'Feature coming soon: Real-time dashboard monitoring token consumption and memory efficiency');
+        }
+
+        function predictPerformance() {
+            showModal('Performance Prediction', 'Feature coming soon: Predict token usage based on conversation length and complexity');
+        }
+
+        function abTesting() {
+            showModal('A/B Testing', 'Feature coming soon: Compare two different memory strategies in parallel');
+        }
+
+        function smartRecommendations() {
+            showModal('Smart Recommendations', 'Feature coming soon: AI-powered suggestions to improve your implementation');
+        }
+
+        function updateResults(data) {
+            document.getElementById('result-naive').textContent = data.naive.total_tokens.toLocaleString();
+            document.getElementById('result-memory').textContent = data.memory.total_tokens.toLocaleString();
+            document.getElementById('result-savings').textContent = `-${data.savings_pct}%`;
+            document.getElementById('result-quality').textContent = `${data.quality.passed}/${data.quality.total}`;
+
+            if (data.score) {
+                document.getElementById('score-display').textContent = data.score.total.toFixed(1);
+                document.getElementById('grade-display').textContent = `Grade: ${data.score.grade} — ${data.score.message}`;
+            }
+
+            if (data.leaderboard_rank) {
+                document.getElementById('rank-display').textContent = `#${data.leaderboard_rank}`;
+                document.getElementById('rank-info').textContent = 'Your current ranking';
+            }
+        }
+
+        function showModal(title, content) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalContent').innerHTML = `<p>${content}</p>`;
+            document.getElementById('resultModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('resultModal').classList.remove('show');
+        }
+
+        // Load initial data
+        fetch('/api/report').then(r => r.json()).then(updateResults).catch(() => {});
+    </script>
+</body>
+</html>

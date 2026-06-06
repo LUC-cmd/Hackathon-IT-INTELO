@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemBridge — Memory Graph</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        * { font-family: 'Poppins', sans-serif; }
+
+        body { background: linear-gradient(135deg, #0f172a 0%, #1a2a4a 50%, #0f1729 100%); }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        svg { max-width: 100%; height: auto; }
+
+        .node {
+            stroke: #1e293b;
+            stroke-width: 2px;
+            cursor: pointer;
+        }
+
+        .link {
+            stroke: rgba(99, 102, 241, 0.2);
+            stroke-width: 1.5px;
+        }
+
+        .node-label {
+            font-size: 12px;
+            text-anchor: middle;
+            fill: #cbd5e1;
+            pointer-events: none;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(30, 41, 59, 0.95);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: #cbd5e1;
+            pointer-events: none;
+            z-index: 100;
+            display: none;
+        }
+
+        .stat-box {
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            padding: 0.75rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-50">
+    <div class="min-h-screen">
+        <!-- NAVBAR -->
+        <nav class="glass border-b border-slate-700/30 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-indigo-400">🧠 Memory Graph</h1>
+                    <p class="text-xs text-slate-400">Visualize how memories interconnect</p>
+                </div>
+                <a href="/" class="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg font-semibold transition">← Dashboard</a>
+            </div>
+        </nav>
+
+        <!-- CONTENT -->
+        <div class="max-w-7xl mx-auto px-6 py-12">
+            <!-- INTRO -->
+            <div class="glass rounded-2xl p-8 mb-8">
+                <h2 class="text-2xl font-bold mb-4">Memory Network Visualization</h2>
+                <p class="text-slate-300 mb-4">
+                    This shows how memories from the current session are stored and connected. Each node represents a memory entry, colored by type.
+                </p>
+                <div class="grid grid-cols-4 gap-4 text-sm">
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-blue-500"></div>
+                        <span>Fact</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-green-500"></div>
+                        <span>Geo</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-purple-500"></div>
+                        <span>Media</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-amber-500"></div>
+                        <span>Message</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRAPH -->
+            <div class="glass rounded-2xl p-8 mb-8">
+                <div id="graph-container" style="width: 100%; height: 600px;">
+                    <svg id="memory-graph"></svg>
+                </div>
+                <div class="tooltip" id="tooltip"></div>
+            </div>
+
+            <!-- STATS -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass rounded-xl p-6">
+                    <div class="text-slate-400 text-sm font-bold mb-2">TOTAL MEMORIES</div>
+                    <div class="text-3xl font-bold text-indigo-400" id="total-memories">0</div>
+                    <div class="stat-box">
+                        <div class="text-xs text-slate-400">Stored entries</div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-xl p-6">
+                    <div class="text-slate-400 text-sm font-bold mb-2">MEMORY DENSITY</div>
+                    <div class="text-3xl font-bold text-cyan-400" id="memory-density">0%</div>
+                    <div class="stat-box">
+                        <div class="text-xs text-slate-400">Network connectivity</div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-xl p-6">
+                    <div class="text-slate-400 text-sm font-bold mb-2">AVG CONNECTIONS</div>
+                    <div class="text-3xl font-bold text-green-400" id="avg-connections">0</div>
+                    <div class="stat-box">
+                        <div class="text-xs text-slate-400">Links per memory</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadMemoryGraph() {
+            const res = await fetch('/api/memory/graph');
+            const data = await res.json();
+
+            const nodes = data.nodes || [];
+            const links = data.edges || [];
+
+            document.getElementById('total-memories').textContent = nodes.length;
+            document.getElementById('avg-connections').textContent = (links.length / Math.max(nodes.length, 1)).toFixed(1);
+            document.getElementById('memory-density').textContent = ((links.length / (nodes.length * (nodes.length - 1))) * 100).toFixed(1);
+
+            renderGraph(nodes, links);
+        }
+
+        function renderGraph(nodes, links) {
+            const svg = d3.select("#memory-graph");
+            const container = document.getElementById('graph-container');
+            const width = container.offsetWidth;
+            const height = container.offsetHeight;
+
+            // Color mapping
+            const colorMap = {
+                fact: '#3b82f6',
+                geo: '#10b981',
+                media: '#a855f7',
+                msg: '#f59e0b'
+            };
+
+            // Force simulation
+            const simulation = d3.forceSimulation(nodes)
+                .force('link', d3.forceLink(links)
+                    .id(d => d.id)
+                    .distance(80))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2))
+                .force('collision', d3.forceCollide().radius(25));
+
+            // Links
+            const link = svg.selectAll('.link')
+                .data(links)
+                .enter()
+                .append('line')
+                .attr('class', 'link');
+
+            // Nodes
+            const node = svg.selectAll('.node')
+                .data(nodes)
+                .enter()
+                .append('circle')
+                .attr('class', 'node')
+                .attr('r', 12)
+                .attr('fill', d => colorMap[d.type] || '#6366f1')
+                .call(d3.drag()
+                    .on('start', dragStarted)
+                    .on('drag', dragged)
+                    .on('end', dragEnded));
+
+            // Labels
+            const labels = svg.selectAll('.node-label')
+                .data(nodes)
+                .enter()
+                .append('text')
+                .attr('class', 'node-label')
+                .text(d => d.label);
+
+            // Tooltip
+            node.on('mouseover', (e, d) => {
+                const tooltip = document.getElementById('tooltip');
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.pageX + 10) + 'px';
+                tooltip.style.top = (e.pageY + 10) + 'px';
+                tooltip.innerHTML = `
+                    <strong>${d.label}</strong><br>
+                    Type: ${d.type}<br>
+                    Preview: ${d.preview}
+                `;
+            }).on('mouseout', () => {
+                document.getElementById('tooltip').style.display = 'none';
+            });
+
+            simulation.on('tick', () => {
+                link
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                node
+                    .attr('cx', d => d.x = Math.max(15, Math.min(width - 15, d.x)))
+                    .attr('cy', d => d.y = Math.max(15, Math.min(height - 15, d.y)));
+
+                labels
+                    .attr('x', d => d.x)
+                    .attr('y', d => d.y - 18);
+            });
+
+            function dragStarted(e) {
+                if (!e.active) simulation.alphaTarget(0.3).restart();
+                e.subject.fx = e.subject.x;
+                e.subject.fy = e.subject.y;
+            }
+
+            function dragged(e) {
+                e.subject.fx = e.x;
+                e.subject.fy = e.y;
+            }
+
+            function dragEnded(e) {
+                if (!e.active) simulation.alphaTarget(0);
+                e.subject.fx = null;
+                e.subject.fy = null;
+            }
+        }
+
+        loadMemoryGraph();
+        setInterval(loadMemoryGraph, 30000); // Refresh every 30 seconds
+    </script>
+</body>
+</html>

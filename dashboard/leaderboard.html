@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemBridge — Leaderboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        * { font-family: 'Poppins', sans-serif; }
+
+        body { background: linear-gradient(135deg, #0f172a 0%, #1a2a4a 50%, #0f1729 100%); }
+
+        .glass {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-slide { animation: slideIn 0.5s ease-out; }
+
+        .medal {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .gold { background: rgba(251, 191, 36, 0.2); border: 2px solid #fbbf24; }
+        .silver { background: rgba(203, 213, 225, 0.2); border: 2px solid #cbd5e1; }
+        .bronze { background: rgba(217, 119, 6, 0.2); border: 2px solid #d97706; }
+
+        .rank-row {
+            display: grid;
+            grid-template-columns: 60px 1fr 200px 150px 150px;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .rank-row:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateX(4px);
+        }
+
+        .score-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .score-s { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; }
+        .score-a { background: rgba(34, 197, 94, 0.2); color: #86efac; }
+        .score-b { background: rgba(59, 130, 246, 0.2); color: #93c5fd; }
+
+        .stat-mini {
+            font-size: 0.875rem;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-50">
+    <div class="min-h-screen">
+        <!-- NAVBAR -->
+        <nav class="glass border-b border-slate-700/30 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold gradient-text">🏆 Leaderboard</h1>
+                    <p class="text-xs text-slate-400">Top MemBridge Runs</p>
+                </div>
+                <div class="flex gap-4">
+                    <a href="/" class="px-6 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg font-semibold transition">← Dashboard</a>
+                    <button onclick="location.reload()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg font-semibold transition">🔄 Refresh</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <div class="max-w-7xl mx-auto px-6 py-12">
+            <!-- HERO -->
+            <div class="glass rounded-2xl p-12 text-center mb-12 animate-slide">
+                <h2 class="text-4xl font-bold mb-4">Hall of Fame</h2>
+                <p class="text-xl text-slate-300">
+                    The best MemBridge implementations. Can you beat the top score?
+                </p>
+            </div>
+
+            <!-- STATS -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                <div class="glass rounded-xl p-6 animate-slide">
+                    <div class="text-slate-400 text-sm font-bold mb-2">TOTAL RUNS</div>
+                    <div class="text-3xl font-bold text-indigo-400" id="total-runs">0</div>
+                </div>
+                <div class="glass rounded-xl p-6 animate-slide">
+                    <div class="text-slate-400 text-sm font-bold mb-2">TOP SCORE</div>
+                    <div class="text-3xl font-bold text-amber-400" id="top-score">0</div>
+                </div>
+                <div class="glass rounded-xl p-6 animate-slide">
+                    <div class="text-slate-400 text-sm font-bold mb-2">YOUR RANK</div>
+                    <div class="text-3xl font-bold text-cyan-400" id="your-rank">—</div>
+                </div>
+            </div>
+
+            <!-- LEADERBOARD TABLE -->
+            <div class="glass rounded-xl p-8 animate-slide">
+                <h3 class="text-2xl font-bold mb-6">🥇 Top Scores</h3>
+                <div id="leaderboard" class="space-y-3">
+                    <div class="text-slate-400 text-center py-8">Loading leaderboard...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function loadLeaderboard() {
+            const res = await fetch('/api/leaderboard');
+            const data = await res.json();
+
+            document.getElementById('total-runs').textContent = data.count;
+            document.getElementById('top-score').textContent = data.top_score.toFixed(1);
+
+            const html = data.entries.map((entry, i) => {
+                const rank = i + 1;
+                const score = entry.score.total;
+                const grade = entry.score.grade;
+                const medalClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : '';
+                const scoreClass = grade.startsWith('S') ? 'score-s' : grade.startsWith('A') ? 'score-a' : 'score-b';
+
+                return `
+                    <div class="rank-row">
+                        <div class="medal ${medalClass}">${rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank}</div>
+                        <div>
+                            <div class="font-bold">#${entry.run_id}</div>
+                            <div class="stat-mini">${new Date(entry.timestamp).toLocaleDateString()}</div>
+                        </div>
+                        <div>
+                            <div class="score-badge ${scoreClass}">${grade} — ${score}</div>
+                        </div>
+                        <div>
+                            <div class="stat-mini">Savings: <strong class="text-green-400">${entry.metrics.savings_pct.toFixed(1)}%</strong></div>
+                            <div class="stat-mini">Quality: <strong class="text-cyan-400">${entry.metrics.quality_score.toFixed(0)}%</strong></div>
+                        </div>
+                        <div>
+                            <div class="text-right">
+                                <div class="stat-mini">Naive: ${entry.metrics.tokens_naive.toLocaleString()}</div>
+                                <div class="stat-mini">Memory: ${entry.metrics.tokens_memory.toLocaleString()}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('leaderboard').innerHTML = html || '<div class="text-slate-400 text-center py-8">No runs yet. Start a benchmark!</div>';
+        }
+
+        loadLeaderboard();
+        setInterval(loadLeaderboard, 10000); // Refresh every 10 seconds
+    </script>
+</body>
+</html>

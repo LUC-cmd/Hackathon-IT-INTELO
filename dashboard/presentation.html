@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemBridge — Jury Presentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+        * { font-family: 'Poppins', sans-serif; }
+
+        body { background: #000; color: #fff; }
+
+        .slide {
+            width: 100%;
+            height: 100vh;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1a2a4a 50%, #0f1729 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .slide.active { display: flex; }
+
+        .slide-content {
+            max-width: 1200px;
+            width: 90%;
+            text-align: center;
+            z-index: 10;
+            animation: slideInUp 0.8s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide h1 {
+            font-size: 4rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #818cf8 0%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .slide h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: #f1f5f9;
+        }
+
+        .slide p {
+            font-size: 1.25rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+            line-height: 1.8;
+        }
+
+        .stat-big {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            z-index: 100;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .slide-counter {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            font-size: 1.5rem;
+            color: #94a3b8;
+        }
+
+        .bullet {
+            margin: 1rem 0;
+            font-size: 1.1rem;
+            color: #cbd5e1;
+        }
+
+        .metric-box {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 2px solid #6366f1;
+            padding: 2rem;
+            border-radius: 12px;
+            margin: 1rem;
+        }
+
+        .metric-label {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #818cf8;
+        }
+    </style>
+</head>
+<body>
+    <!-- SLIDE 1: TITLE -->
+    <div class="slide active">
+        <div class="slide-content">
+            <h1>⚙️ MemBridge</h1>
+            <p style="font-size: 2rem; color: #06b6d4;">Shared Memory for AI Agents</p>
+            <p style="margin-top: 3rem; font-size: 1.5rem;">Reduce token consumption by 70% while maintaining quality</p>
+            <p style="margin-top: 2rem; color: #94a3b8;">INTELO 2026 Hackathon</p>
+        </div>
+    </div>
+
+    <!-- SLIDE 2: THE PROBLEM -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>The Problem</h2>
+            <div class="bullet">📈 AI agents send entire conversation history at each turn</div>
+            <div class="bullet">💰 Token cost grows QUADRATICALLY (40 turns = 40× more expensive)</div>
+            <div class="bullet">⏱️ Latency increases, context window saturates</div>
+            <div class="bullet">🤔 Truncating history = agent becomes amnesia</div>
+            <p style="margin-top: 2rem; font-size: 1.3rem;">How do we keep the memory without exploding the cost?</p>
+        </div>
+    </div>
+
+    <!-- SLIDE 3: THE SOLUTION -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>Our Solution: MemBridge</h2>
+            <p>An MCP server that stores, searches, and summarizes memories</p>
+
+            <div style="margin-top: 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div>
+                    <div class="metric-box">
+                        <div class="metric-label">Instead of:</div>
+                        <div class="metric-value" style="color: #ef4444;">Full history</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="metric-box">
+                        <div class="metric-label">We send:</div>
+                        <div class="metric-value" style="color: #10b981;">Smart summary</div>
+                    </div>
+                </div>
+            </div>
+
+            <p style="margin-top: 3rem;">4 core tools: store, search, summarize, stats</p>
+        </div>
+    </div>
+
+    <!-- SLIDE 4: RESULTS -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>Results (50-turn conversation)</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 3rem;">
+                <div class="metric-box">
+                    <div class="metric-label">Naive Mode</div>
+                    <div class="metric-value" style="color: #ef4444;">~12,500 tokens</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">MemBridge</div>
+                    <div class="metric-value" style="color: #10b981;">~3,750 tokens</div>
+                </div>
+            </div>
+
+            <div style="margin-top: 3rem;">
+                <div class="metric-box">
+                    <div class="metric-label">Savings</div>
+                    <div class="metric-value" style="color: #06b6d4;">-70%</div>
+                    <div style="font-size: 1rem; color: #94a3b8; margin-top: 0.5rem;">~€0.001 saved per conversation</div>
+                </div>
+            </div>
+
+            <p style="margin-top: 2rem; color: #10b981;">✓ Quality maintained: 8/10 trap questions answered correctly</p>
+        </div>
+    </div>
+
+    <!-- SLIDE 5: TECH STACK -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>Technology Stack</h2>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 3rem; font-size: 1.1rem;">
+                <div>
+                    <p style="font-weight: 600; color: #818cf8; margin-bottom: 1rem;">Backend</p>
+                    <div class="bullet">FastAPI</div>
+                    <div class="bullet">SQLite + Vector embeddings</div>
+                    <div class="bullet">MCP Server (official SDK)</div>
+                    <div class="bullet">fastembed (semantic search)</div>
+                </div>
+                <div>
+                    <p style="font-weight: 600; color: #06b6d4; margin-bottom: 1rem;">Frontend</p>
+                    <div class="bullet">Tailwind CSS (premium design)</div>
+                    <div class="bullet">Chart.js (realtime charts)</div>
+                    <div class="bullet">D3.js (memory visualization)</div>
+                    <div class="bullet">Streaming SSE (live updates)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: DEMO FEATURES -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>Interactive Features</h2>
+
+            <p style="margin-bottom: 2rem;">6 Premium Dashboards</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; font-size: 0.95rem;">
+                <div>🎮 Interactive Control<br/><span style="color: #94a3b8;">13+ buttons</span></div>
+                <div>⚔️ Battle Arena<br/><span style="color: #94a3b8;">Real-time</span></div>
+                <div>✨ Premium Dashboard<br/><span style="color: #94a3b8;">Modern design</span></div>
+                <div>🥇 Leaderboard<br/><span style="color: #94a3b8;">Scoring system</span></div>
+                <div>🧠 Memory Graph<br/><span style="color: #94a3b8;">D3 visualization</span></div>
+                <div>📊 Original Dashboard<br/><span style="color: #94a3b8;">Multi-modal</span></div>
+            </div>
+
+            <p style="margin-top: 2rem; color: #10b981;">✓ Smart recommendations ✓ Performance predictions ✓ Live monitoring</p>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: INNOVATION -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>What Makes Us Stand Out</h2>
+
+            <div style="margin-top: 3rem; display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                <div style="text-align: left;">
+                    <p style="font-weight: 600; color: #818cf8; margin-bottom: 1rem;">Competition Does:</p>
+                    <div class="bullet">✗ 1 basic dashboard</div>
+                    <div class="bullet">✗ No interactivity</div>
+                    <div class="bullet">✗ Generuc "AI" design</div>
+                    <div class="bullet">✗ Static results</div>
+                </div>
+                <div style="text-align: left;">
+                    <p style="font-weight: 600; color: #06b6d4; margin-bottom: 1rem;">MemBridge Has:</p>
+                    <div class="bullet">✓ 6 premium dashboards</div>
+                    <div class="bullet">✓ 13+ interactive buttons</div>
+                    <div class="bullet">✓ Premium design system</div>
+                    <div class="bullet">✓ Real-time streaming</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 8: LIVE DEMO -->
+    <div class="slide">
+        <div class="slide-content">
+            <h2>Live Demo</h2>
+            <p style="font-size: 1.3rem; margin-top: 2rem;">Let's see it in action</p>
+
+            <div style="margin-top: 3rem;">
+                <p style="font-weight: 600; color: #818cf8; margin-bottom: 1rem;">Open browser:</p>
+                <p style="background: rgba(99, 102, 241, 0.1); padding: 1.5rem; border-radius: 8px; font-size: 1.2rem; font-family: monospace;">
+                    http://localhost:8765/interactive
+                </p>
+            </div>
+
+            <p style="margin-top: 2rem; color: #94a3b8;">Watch the benchmarks run in real-time</p>
+        </div>
+    </div>
+
+    <!-- SLIDE 9: VICTORY -->
+    <div class="slide">
+        <div class="slide-content">
+            <h1 style="font-size: 5rem;">🏆</h1>
+            <h2>MemBridge Wins</h2>
+            <p style="font-size: 1.5rem; margin-top: 2rem;">-70% tokens • Quality maintained • Premium design</p>
+            <p style="margin-top: 2rem; color: #10b981;">Ready for production</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="slide-counter">
+        <span id="slide-number">1</span> / <span id="slide-total">9</span>
+    </div>
+
+    <div class="navigation">
+        <button onclick="previousSlide()">← Previous</button>
+        <button onclick="nextSlide()">Next →</button>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const totalSlides = slides.length;
+        document.getElementById('slide-total').textContent = totalSlides;
+
+        function showSlide(n) {
+            slides.forEach(slide => slide.classList.remove('active'));
+            slides[n].classList.add('active');
+            document.getElementById('slide-number').textContent = n + 1;
+        }
+
+        function nextSlide() {
+            currentSlide = (currentSlide + 1) % totalSlides;
+            showSlide(currentSlide);
+        }
+
+        function previousSlide() {
+            currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
+            showSlide(currentSlide);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+        });
+
+        showSlide(0);
+    </script>
+</body>
+</html>

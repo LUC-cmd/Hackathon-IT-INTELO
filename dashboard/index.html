@@ -3,143 +3,273 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MemBridge — Tableau de bord</title>
+  <title>MemBridge — Mémoire IA</title>
   <link rel="stylesheet" href="/dashboard/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
-  <div class="shell">
-    <header class="hero">
-      <div class="brand">
-        <div class="logo-mark">M</div>
-        <div>
-          <p class="badge">INTELO2026 · Lomé</p>
-          <h1 data-i18n="title">MemBridge</h1>
-          <p class="subtitle" data-i18n="subtitle">Mémoire partagée · Benchmark live · Multi-modal</p>
+
+  <!-- NAV -->
+  <nav class="nav-top">
+    <div class="nav-brand"><div class="nav-logo">M</div> MemBridge</div>
+    <div class="nav-links">
+      <a href="/battle" class="btn btn-fire">⚡ Battle</a>
+      <a href="/pitch" class="btn btn-ghost">Pitch</a>
+      <button id="lang-toggle" class="btn btn-ghost">EN</button>
+      <button id="present-mode" class="btn btn-ghost">⛶</button>
+      <button id="run-benchmark" class="btn btn-gold">▶ Benchmark</button>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero-cine">
+    <div class="hero-left">
+      <p class="eyebrow">INTELO2026 · Hackathon · Lomé</p>
+      <h1 class="hero-title">
+        Mémoire
+        <span class="accent">partagée</span>
+        <span class="accent2">sans amnésie</span>
+      </h1>
+      <p class="hero-desc">
+        Serveur MCP qui stocke, cherche et résume — 79% de tokens économisés,
+        qualité maintenue. Audio · Vidéo · GPS · Multi-agents.
+      </p>
+      <div class="hero-stats">
+        <div class="stat-block">
+          <div class="stat-num rust" id="hero-savings">79%</div>
+          <div class="stat-label">Économie tokens</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-num moss" id="hero-traps">10/10</div>
+          <div class="stat-label">Pièges réussis</div>
+        </div>
+        <div class="stat-block">
+          <div class="stat-num gold">11</div>
+          <div class="stat-label">Outils MCP</div>
         </div>
       </div>
-      <div class="controls">
-        <a href="/battle" class="btn moss">⚡ Battle Live</a>
-        <a href="/pitch" class="btn ghost">Pitch</a>
-        <button id="lang-toggle" class="btn ghost">EN</button>
-        <button id="present-mode" class="btn ghost" data-i18n="present">Présentation</button>
-        <button id="export-pdf" class="btn ghost">PDF</button>
-        <button id="export-json" class="btn ghost">JSON</button>
-        <button id="run-benchmark" class="btn primary" data-i18n="run">Lancer benchmark</button>
+      <div class="hero-cta">
+        <a href="/battle" class="btn btn-fire">⚡ Démo Battle Live</a>
+        <button id="export-pdf" class="btn btn-ghost">↓ PDF</button>
+        <button id="export-json" class="btn btn-ghost">↓ JSON</button>
       </div>
-    </header>
+    </div>
+    <div class="hero-right">
+      <div class="brain-wrap">
+        <canvas id="brain-canvas"></canvas>
+        <span class="brain-label">Réseau mémoire live</span>
+      </div>
+    </div>
+    <div class="ticker">
+      <span class="ticker-inner">
+        MEMBRIDGE · 79% ÉCONOMIE · 10/10 PIÈGES · EMBEDDINGS MULTILINGUES · AUDIO · VIDÉO · GPS · MULTI-AGENTS · MCP · HACKATHON INTELO2026 ·&nbsp;
+        MEMBRIDGE · 79% ÉCONOMIE · 10/10 PIÈGES · EMBEDDINGS MULTILINGUES · AUDIO · VIDÉO · GPS · MULTI-AGENTS · MCP · HACKATHON INTELO2026 ·&nbsp;
+      </span>
+    </div>
+  </section>
 
-    <section id="insights-panel" class="card wide insights-panel" hidden>
-      <h2>Verdict jury</h2>
+  <!-- VERDICT -->
+  <section class="section section-dark shell">
+    <div id="insights-panel" class="insights-panel" hidden>
+      <h2 style="font-family:Syne,sans-serif;font-size:1.2rem;margin-bottom:0.5rem">🏆 Verdict jury</h2>
       <p id="insights-summary" class="insights-summary"></p>
       <div id="insights-list" class="insights-list"></div>
-    </section>
+    </div>
 
-    <section class="grid metrics">
-      <article class="card naive">
-        <h2 data-i18n="naive">Mode naïf</h2>
-        <div class="metric" id="naive-tokens">—</div>
-        <p class="metric-label" data-i18n="tokens_cum">tokens cumulés</p>
-      </article>
-      <article class="card memory">
-        <h2 data-i18n="memory">MemBridge</h2>
-        <div class="metric" id="memory-tokens">—</div>
-        <p class="metric-label" data-i18n="tokens_cum">tokens cumulés</p>
-      </article>
-      <article class="card savings-card">
-        <h2 data-i18n="savings">Économie</h2>
-        <div class="metric" id="savings">—</div>
-        <p class="metric-label" id="euros-saved">—</p>
-        <div class="battle-strip">
-          <div class="battle-bar">
-            <div class="battle-naive" id="battle-naive" style="width:70%">naïf</div>
-            <div class="battle-memory" id="battle-memory" style="width:30%">MCP</div>
-          </div>
+    <div class="metrics-row">
+      <div class="metric-card naive">
+        <h3>Mode naïf</h3>
+        <div class="metric-val" id="naive-tokens">—</div>
+        <p style="font-size:0.65rem;color:var(--clay);margin-top:0.3rem">tokens cumulés</p>
+      </div>
+      <div class="metric-card memory">
+        <h3>MemBridge</h3>
+        <div class="metric-val" id="memory-tokens">—</div>
+        <p style="font-size:0.65rem;color:var(--clay);margin-top:0.3rem">tokens cumulés</p>
+      </div>
+      <div class="metric-card savings">
+        <h3>Économie</h3>
+        <div class="metric-val" id="savings">—</div>
+        <p id="euros-saved" style="font-size:0.65rem;color:var(--clay);margin-top:0.3rem">—</p>
+        <div class="battle-bar">
+          <div class="battle-naive" id="battle-naive" style="width:70%">naïf</div>
+          <div class="battle-memory" id="battle-memory" style="width:30%">MCP</div>
         </div>
-      </article>
-      <article class="card quality-card">
-        <h2 data-i18n="quality">Pièges</h2>
-        <div class="metric" id="quality-score">—</div>
+      </div>
+      <div class="metric-card quality">
+        <h3>Questions pièges</h3>
+        <div class="metric-val" id="quality-score">—</div>
         <div class="bar"><div class="bar-fill" id="quality-bar"></div></div>
-      </article>
-    </section>
+      </div>
+    </div>
+  </section>
 
-    <section class="grid charts-row">
-      <article class="card">
-        <h2 data-i18n="chart_tokens">Tokens par tour</h2>
-        <div class="chart-wrap tall"><canvas id="token-chart"></canvas></div>
-      </article>
-      <article class="card">
-        <h2 data-i18n="chart_savings">Répartition coût</h2>
-        <div class="chart-wrap short"><canvas id="donut-chart"></canvas></div>
-        <div class="chart-wrap short"><canvas id="trap-chart"></canvas></div>
-      </article>
-    </section>
+  <!-- CONSOLE MCP — BOUTONS RÉELS -->
+  <section class="section section-light shell" id="console">
+    <div class="section-head">
+      <h2>Console MCP — 11 outils en un clic</h2>
+      <p>Chaque bouton appelle le vrai serveur MCP. La réponse s'affiche en direct ci-dessous.</p>
+    </div>
 
-    <section class="grid charts-row">
-      <article class="card">
-        <h2>Tokens cumulés (course)</h2>
-        <div class="chart-wrap tall"><canvas id="cumulative-chart"></canvas></div>
-      </article>
-      <article class="card">
-        <h2>Radar performance</h2>
-        <div class="chart-wrap tall"><canvas id="radar-chart"></canvas></div>
-      </article>
-    </section>
+    <div class="quick-actions">
+      <button id="btn-demo-tour" class="btn btn-fire">▶ Tour démo auto (11 outils)</button>
+      <button id="btn-seed" class="btn btn-ghost">↻ Recharger session</button>
+      <button id="btn-all-traps" class="btn btn-moss">🎯 Tester les 10 pièges</button>
+      <a href="/battle" class="btn btn-ghost">⚡ Battle Live</a>
+      <a href="/leaderboard" class="btn btn-ghost">🥇 Leaderboard</a>
+      <a href="/memory-graph" class="btn btn-ghost">🧠 Graphe mémoire</a>
+    </div>
 
-    <section class="grid charts-row">
-      <article class="card">
-        <h2 data-i18n="search_live">Recherche sémantique live</h2>
-        <div class="search-live">
-          <input type="text" id="search-query" placeholder="identité de l'interlocutrice premium…" />
-          <button id="search-btn" class="btn moss" data-i18n="search">Chercher</button>
+    <div class="tool-grid" id="tool-grid">
+      <button class="tool-btn core" data-tool="search"><span class="tool-icon">🔍</span><span class="tool-name">memory_search</span><span class="tool-desc">Recherche sémantique</span></button>
+      <button class="tool-btn core" data-tool="store"><span class="tool-icon">💾</span><span class="tool-name">memory_store</span><span class="tool-desc">Stocker un fait</span></button>
+      <button class="tool-btn core" data-tool="summarize"><span class="tool-icon">📝</span><span class="tool-name">memory_summarize</span><span class="tool-desc">Résumé compressé</span></button>
+      <button class="tool-btn core" data-tool="stats"><span class="tool-icon">📊</span><span class="tool-name">memory_stats</span><span class="tool-desc">Compteur tokens</span></button>
+      <button class="tool-btn" data-tool="transcribe"><span class="tool-icon">🎙️</span><span class="tool-name">memory_transcribe</span><span class="tool-desc">Audio → mémoire</span></button>
+      <button class="tool-btn" data-tool="vision"><span class="tool-icon">📷</span><span class="tool-name">memory_vision</span><span class="tool-desc">Image → mémoire</span></button>
+      <button class="tool-btn" data-tool="locate"><span class="tool-icon">📍</span><span class="tool-name">memory_locate</span><span class="tool-desc">GPS Lomé</span></button>
+      <button class="tool-btn" data-tool="translate"><span class="tool-icon">🌐</span><span class="tool-name">memory_translate</span><span class="tool-desc">FR → EN</span></button>
+      <button class="tool-btn" data-tool="timeline"><span class="tool-icon">⏳</span><span class="tool-name">memory_timeline</span><span class="tool-desc">Chronologie</span></button>
+      <button class="tool-btn" data-tool="share"><span class="tool-icon">🔗</span><span class="tool-name">memory_share</span><span class="tool-desc">Multi-agents</span></button>
+      <button class="tool-btn danger" data-tool="forget"><span class="tool-icon">🗑️</span><span class="tool-name">memory_forget</span><span class="tool-desc">Oubli bruit</span></button>
+    </div>
+
+    <div class="live-console">
+      <div class="console-header">
+        <span id="console-status">📡 En attente — cliquez un bouton</span>
+        <button id="console-clear" class="btn btn-ghost btn-sm">Effacer</button>
+      </div>
+      <pre id="console-output" class="console-output">// Cliquez « Tour démo auto » ou un outil MCP ci-dessus
+// Chaque action appelle POST/GET /api/* → serveur MCP réel</pre>
+    </div>
+
+    <div class="innov-grid" id="innov-grid" style="margin-top:2rem">
+      <div class="innov-card" data-tool="search"><span class="innov-badge">CORE</span><div class="innov-icon">🔍</div><div class="innov-name">memory_search</div><div class="innov-desc">Paraphrase sans mot-clé exact</div><button class="innov-run">▶ Tester</button></div>
+      <div class="innov-card" data-tool="store"><span class="innov-badge">CORE</span><div class="innov-icon">💾</div><div class="innov-name">memory_store</div><div class="innov-desc">Tags + métadonnées JSON</div><button class="innov-run">▶ Tester</button></div>
+      <div class="innov-card" data-tool="summarize"><span class="innov-badge">CORE</span><div class="innov-icon">📝</div><div class="innov-name">memory_summarize</div><div class="innov-desc">CLIENT|CTR|MAIL|EUR|DATE</div><button class="innov-run">▶ Tester</button></div>
+      <div class="innov-card" data-tool="stats"><div class="innov-icon">📊</div><div class="innov-name">memory_stats</div><div class="innov-desc">Tokens in/out live</div><button class="innov-run">▶ Tester</button></div>
+      <div class="innov-card" data-tool="transcribe"><div class="innov-icon">🎙️</div><div class="innov-name">memory_transcribe</div><div class="innov-desc">Voix → mémoire partagée</div><button class="innov-run">▶ Tester</button></div>
+      <div class="innov-card" data-tool="vision"><div class="innov-icon">📷</div><div class="innov-name">memory_vision</div><div class="innov-desc">Caméra → mémoire</div><button class="innov-run">▶ Tester</button></div>
+      <div class="innov-card" data-tool="locate"><div class="innov-icon">📍</div><div class="innov-name">memory_locate</div><div class="innov-desc">GPS + carte OSM</div><button class="innov-run">▶ Tester</button></div>
+      <div class="innov-card" data-tool="translate"><div class="innov-icon">🌐</div><div class="innov-name">memory_translate</div><div class="innov-desc">FR ↔ EN offline</div><button class="innov-run">▶ Tester</button></div>
+      <div class="innov-card" data-tool="timeline"><div class="innov-icon">⏳</div><div class="innov-name">memory_timeline</div><div class="innov-desc">Fait · géo · média</div><button class="innov-run">▶ Tester</button></div>
+      <div class="innov-card" data-tool="share"><div class="innov-icon">🔗</div><div class="innov-name">memory_share</div><div class="innov-desc">Agent A → Agent B</div><button class="innov-run">▶ Tester</button></div>
+      <div class="innov-card" data-tool="forget"><div class="innov-icon">🗑️</div><div class="innov-name">memory_forget</div><div class="innov-desc">Purge bruit sémantique</div><button class="innov-run">▶ Tester</button></div>
+    </div>
+  </section>
+
+  <!-- COMPARAISON SLIDER -->
+  <section class="section section-light shell">
+    <div class="section-head">
+      <h2>Contexte envoyé au LLM</h2>
+      <p>Glissez pour comparer : naïf (tout l'historique) vs MemBridge (résumé + recherche).</p>
+    </div>
+    <div class="compare-wrap" id="compare-wrap">
+      <div class="compare-naive">
+        <div class="compare-title" style="color:#FF8A70">Mode naïf — historique complet</div>
+        <div class="compare-content" id="compare-naive-text">Chargement…</div>
+      </div>
+      <div class="compare-memory" id="compare-memory-layer">
+        <div class="compare-title" style="color:#4ADE80">MemBridge — contexte compressé</div>
+        <div class="compare-content" id="compare-memory-text">Chargement…</div>
+      </div>
+      <div class="compare-handle" id="compare-handle"></div>
+    </div>
+  </section>
+
+  <!-- GRAPHIQUES -->
+  <section class="section section-dark shell">
+    <div class="section-head"><h2>Benchmark chiffré</h2><p>5 visualisations — preuve mesurable pour le jury.</p></div>
+    <div class="charts-grid">
+      <div class="chart-box">
+        <h3>Tokens par tour</h3>
+        <div class="chart-area tall"><canvas id="token-chart"></canvas></div>
+      </div>
+      <div>
+        <div class="chart-box" style="margin-bottom:1rem">
+          <h3>Répartition coût</h3>
+          <div class="chart-area"><canvas id="donut-chart"></canvas></div>
         </div>
-        <div id="search-result" class="search-result"></div>
-      </article>
-      <article class="card">
-        <h2 data-i18n="timeline">Timeline mémoire</h2>
-        <div id="memory-timeline" class="timeline"></div>
-        <p class="hint" data-i18n="timeline_hint">■ fait · ■ géo · ■ média</p>
-      </article>
-    </section>
+        <div class="chart-box">
+          <h3>Score pièges</h3>
+          <div class="chart-area"><canvas id="trap-chart"></canvas></div>
+        </div>
+      </div>
+    </div>
+    <div class="charts-grid" style="margin-top:1rem">
+      <div class="chart-box">
+        <h3>Course cumulative</h3>
+        <div class="chart-area tall"><canvas id="cumulative-chart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <h3>Radar performance</h3>
+        <div class="chart-area tall"><canvas id="radar-chart"></canvas></div>
+      </div>
+    </div>
+  </section>
 
-    <section class="grid media-row">
-      <article class="card">
-        <h2 data-i18n="audio">Audio live</h2>
-        <div id="audio-zone" class="media-zone" data-i18n="audio_hint">Cliquer pour dicter</div>
-        <canvas id="audio-viz" class="audio-viz" height="40"></canvas>
+  <!-- PIÈGE CAROUSEL -->
+  <section class="section section-light shell">
+    <div class="section-head"><h2>Question piège live</h2><p>Paraphrase sans mot-clé — preuve que la mémoire tient.</p></div>
+    <div class="trap-carousel" id="trap-carousel">
+      <div class="trap-slide active" id="trap-slide-0">
+        <div class="trap-q">Chargement…</div>
+        <div class="trap-a" id="trap-answer-0">—</div>
+      </div>
+    </div>
+    <div class="trap-nav">
+      <button class="btn btn-ghost" id="trap-prev">← Préc</button>
+      <button class="btn btn-moss" id="trap-test">Tester maintenant</button>
+      <button class="btn btn-ghost" id="trap-next">Suiv →</button>
+    </div>
+    <div id="trap-list" class="trap-list" style="margin-top:1.5rem"></div>
+  </section>
+
+  <!-- MULTI-MODAL -->
+  <section class="section section-dark shell">
+    <div class="section-head"><h2>Lab multi-modal</h2><p>Audio · Vidéo · GPS — tout stocké dans la même mémoire MCP.</p></div>
+    <div class="media-grid">
+      <div class="media-card">
+        <h3 style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--clay);margin-bottom:0.5rem">🎙️ Audio live</h3>
+        <div id="audio-zone" class="media-zone">Cliquer pour dicter</div>
+        <canvas id="audio-viz" style="width:100%;height:40px;margin-top:0.5rem"></canvas>
         <textarea id="transcript" rows="3" placeholder="Transcription…"></textarea>
-        <div class="row">
-          <button id="store-transcript" class="btn ghost" data-i18n="store">→ Mémoire</button>
-        </div>
-        <p id="audio-status" class="hint"></p>
-      </article>
-      <article class="card">
-        <h2 data-i18n="video">Vidéo / image</h2>
+        <button id="store-transcript" class="btn btn-moss" style="margin-top:0.5rem;width:100%">→ Stocker en mémoire</button>
+        <p id="audio-status" style="font-size:0.65rem;color:var(--clay);margin-top:0.4rem"></p>
+      </div>
+      <div class="media-card">
+        <h3 style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--clay);margin-bottom:0.5rem">📷 Vidéo</h3>
         <video id="video-preview" class="video-preview" autoplay muted playsinline></video>
         <canvas id="snapshot-canvas" style="display:none"></canvas>
-        <div class="row">
-          <button id="cam-btn" class="btn ghost" data-i18n="cam_on">Caméra</button>
-          <button id="snap-btn" class="btn ghost" data-i18n="snap">Capture → mémoire</button>
+        <div style="display:flex;gap:0.5rem;margin-top:0.5rem">
+          <button id="cam-btn" class="btn btn-ghost" style="flex:1">Caméra</button>
+          <button id="snap-btn" class="btn btn-fire" style="flex:1">Capture</button>
         </div>
-        <p id="video-status" class="hint"></p>
-      </article>
-      <article class="card">
-        <h2 data-i18n="geo">Géolocalisation</h2>
-        <p id="geo-status" class="hint" data-i18n="geo_wait">En attente…</p>
-        <button id="geo-btn" class="btn ghost" data-i18n="geo_btn">Activer GPS</button>
+        <p id="video-status" style="font-size:0.65rem;color:var(--clay);margin-top:0.4rem"></p>
+      </div>
+      <div class="media-card">
+        <h3 style="font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--clay);margin-bottom:0.5rem">📍 GPS</h3>
+        <p id="geo-status" style="font-size:0.75rem;color:var(--clay)">En attente…</p>
+        <button id="geo-btn" class="btn btn-gold" style="margin-top:0.75rem;width:100%">Activer position</button>
         <div id="map-preview" class="map-preview"></div>
-      </article>
-    </section>
+        <div id="memory-timeline" class="timeline" style="margin-top:0.75rem"></div>
+      </div>
+    </div>
+  </section>
 
-    <section class="card wide">
-      <h2 data-i18n="traps">Questions pièges — détail</h2>
-      <div id="trap-list" class="trap-list"></div>
-    </section>
+  <!-- RECHERCHE -->
+  <section class="section section-light shell">
+    <div class="section-head"><h2>Recherche sémantique</h2></div>
+    <div style="display:flex;gap:0.5rem">
+      <input type="text" id="search-query" placeholder="identité de l'interlocutrice premium…" style="flex:1" />
+      <button id="search-btn" class="btn btn-moss">Chercher</button>
+    </div>
+    <div id="search-result" class="search-result"></div>
+  </section>
 
-    <footer><span data-i18n="footer">MemBridge · INTELO2026</span></footer>
-  </div>
+  <footer>MemBridge · INTELO2026 · Hackathon IT Lomé</footer>
 
+  <script src="/dashboard/brain-viz.js"></script>
   <script src="/dashboard/audio-viz.js"></script>
   <script src="/dashboard/app.js"></script>
 </body>
